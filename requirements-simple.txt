@@ -1,9 +1,0 @@
-opencv-python
-mediapipe
-numpy
-pandas
-pygame
-streamlit
-matplotlib
-python-dotenv
-pillow
