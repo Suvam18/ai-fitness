@@ -11,36 +11,77 @@ import time
 st.set_page_config(
     page_title="AI Fitness Trainer",
     page_icon="🏋️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Enhanced Custom CSS
 st.markdown("""
 <style>
+    /* Global Styles */
+    .main { padding: 2rem 1rem; }
+    .block-container { padding-top: 2rem; max-width: 1400px; }
+    
+    /* Typography */
     .main-header {
-        font-size: 3rem;
-        color: #FF4B4B;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         text-align: center;
-        margin-bottom: 2rem;
+        margin: 0 0 1.5rem 0;
+        padding: 1rem 0;
     }
+    
+    .subtitle {
+        text-align: center;
+        color: #666;
+        font-size: 1.1rem;
+        margin-bottom: 2.5rem;
+    }
+    
+    /* Cards & Containers */
     .metric-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1rem;
-        border-radius: 10px;
+        padding: 1.5rem;
+        border-radius: 12px;
         color: white;
         text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
     }
-    .feedback-positive {
-        color: #00D26A;
-        font-weight: bold;
+    
+    .info-card {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+        margin: 1rem 0;
     }
-    .feedback-warning {
-        color: #FFB02E;
-        font-weight: bold;
+    
+    /* Feedback Styles */
+    .feedback-positive { color: #00D26A; font-weight: 600; }
+    .feedback-warning { color: #FFB02E; font-weight: 600; }
+    .feedback-error { color: #FF4B4B; font-weight: 600; }
+    
+    /* Sidebar */
+    .css-1d391kg { padding: 2rem 1rem; }
+    section[data-testid="stSidebar"] { background-color: #f8f9fa; }
+    
+    /* Buttons */
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
     }
-    .feedback-error {
-        color: #FF4B4B;
-        font-weight: bold;
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .main-header { font-size: 2rem; }
+        .block-container { padding: 1rem; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -101,31 +142,44 @@ class SimpleTrainer:
 
 def main():
     st.markdown('<h1 class="main-header">🏋️ AI Fitness Trainer</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="subtitle">Real-time exercise form analysis with AI-powered feedback</p>', unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
-        st.header("Workout Settings")
-        exercise = st.selectbox("Select Exercise", ["Bicep Curls", "Squats", "Push-ups"])
-        target_reps = st.slider("Target Reps", 5, 20, 10)
+        st.markdown("### ⚙️ Workout Settings")
+        st.markdown("")
+        exercise = st.selectbox("Select Exercise", ["Bicep Curls", "Squats", "Push-ups"], help="Choose your exercise")
+        target_reps = st.slider("Target Reps", 5, 20, 10, help="Set your rep goal")
         
-        st.header("Camera Settings")
-        start_camera = st.button("Start Camera")
-        stop_camera = st.button("Stop Camera")
+        st.markdown("---")
+        st.markdown("### 📹 Camera Controls")
+        st.markdown("")
+        col_a, col_b = st.columns(2)
+        with col_a:
+            start_camera = st.button("▶️ Start", use_container_width=True)
+        with col_b:
+            stop_camera = st.button("⏹️ Stop", use_container_width=True)
         
-        st.header("Session Info")
+        st.markdown("---")
+        st.markdown("### 📊 Session Stats")
+        st.markdown("")
         if 'rep_count' not in st.session_state:
             st.session_state.rep_count = 0
         if 'session_start' not in st.session_state:
             st.session_state.session_start = datetime.now()
-            
-        st.metric("Current Reps", st.session_state.rep_count)
-        st.metric("Target Reps", target_reps)
         
-    # Main area
-    col1, col2 = st.columns([2, 1])
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Current", st.session_state.rep_count, delta=None)
+        with col2:
+            st.metric("Target", target_reps, delta=None)
+        
+    # Main area with better spacing
+    col1, col2 = st.columns([2.5, 1.5], gap="large")
     
     with col1:
-        st.header("Live Camera Feed")
+        st.markdown("### 📹 Live Camera Feed")
+        st.markdown("")
         
         if start_camera:
             # Initialize camera
@@ -178,36 +232,56 @@ def main():
             cap.release()
             
     with col2:
-        st.header("Workout Analytics")
+        st.markdown("### 📈 Workout Analytics")
+        st.markdown("")
         
-        # Progress
+        # Progress with better styling
         progress = min(st.session_state.rep_count / target_reps, 1.0)
         st.progress(progress)
-        st.metric("Completion", f"{progress*100:.1f}%")
+        st.metric("Completion", f"{progress*100:.1f}%", delta=f"{st.session_state.rep_count}/{target_reps} reps")
         
-        # Form tips
-        st.subheader("Form Tips")
+        st.markdown("")
+        
+        # Form tips with better formatting
+        st.markdown("### 💡 Form Guide")
         if exercise == "Bicep Curls":
             st.info("""
-            💡 **Bicep Curl Tips:**
-            • Keep elbows close to your body
-            • Fully extend arms at the bottom
-            • Control the movement both ways
-            • Don't swing your torso
+            **Bicep Curl Tips:**
+            
+            ✓ Keep elbows close to body  
+            ✓ Fully extend arms at bottom  
+            ✓ Control the movement  
+            ✓ Avoid swinging torso
             """)
         elif exercise == "Squats":
             st.info("""
-            💡 **Squat Tips:**
-            • Keep knees aligned with feet
-            • Maintain straight back
-            • Go parallel to the floor
-            • Push through your heels
+            **Squat Tips:**
+            
+            ✓ Knees aligned with feet  
+            ✓ Maintain straight back  
+            ✓ Go parallel to floor  
+            ✓ Push through heels
+            """)
+        elif exercise == "Push-ups":
+            st.info("""
+            **Push-up Tips:**
+            
+            ✓ Keep body straight  
+            ✓ Elbows at 45° angle  
+            ✓ Full range of motion  
+            ✓ Engage core muscles
             """)
         
-        # Session summary
-        st.subheader("Session Summary")
+        st.markdown("")
+        
+        # Session summary with better layout
+        st.markdown("### ⏱️ Session Summary")
         duration = datetime.now() - st.session_state.session_start
-        st.metric("Workout Duration", f"{duration.seconds // 60}:{duration.seconds % 60:02d}")
+        col_x, col_y = st.columns(2)
+        with col_x:
+            st.metric("Duration", f"{duration.seconds // 60}m {duration.seconds % 60}s")
+        with col_y:
+            st.metric("Reps/Min", f"{st.session_state.rep_count / max(duration.seconds / 60, 1):.1f}")
 
 if __name__ == "__main__":
     main()

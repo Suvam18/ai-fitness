@@ -11,11 +11,33 @@ def main():
     st.set_page_config(
         page_title="AI Fitness Trainer",
         page_icon="🏋️",
-        layout="wide"
+        layout="wide",
+        initial_sidebar_state="expanded"
     )
     
+    # Enhanced CSS
+    st.markdown("""
+    <style>
+        .main { padding: 2rem 1rem; }
+        .block-container { padding-top: 2rem; max-width: 1400px; }
+        h1 { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle { text-align: center; color: #666; margin-bottom: 2rem; }
+        .stButton>button { width: 100%; border-radius: 8px; font-weight: 600; }
+        section[data-testid="stSidebar"] { background-color: #f8f9fa; }
+        @media (max-width: 768px) { .block-container { padding: 1rem; } }
+    </style>
+    """, unsafe_allow_html=True)
+    
     st.title("🏋️ AI Fitness Trainer")
-    st.markdown("Real-time exercise form analysis using computer vision")
+    st.markdown('<p class="subtitle">Real-time exercise form analysis using computer vision</p>', unsafe_allow_html=True)
     
     # Initialize session state
     if 'camera_on' not in st.session_state:
@@ -23,36 +45,52 @@ def main():
     if 'rep_count' not in st.session_state:
         st.session_state.rep_count = 0
     
-    # Sidebar
+    # Sidebar with improved layout
     with st.sidebar:
-        st.header("Settings")
+        st.markdown("### ⚙️ Settings")
+        st.markdown("")
         
         exercise = st.selectbox(
             "Choose Exercise",
-            ["Bicep Curls", "Squats", "Push-ups", "Shoulder Press"]
+            ["Bicep Curls", "Squats", "Push-ups", "Shoulder Press"],
+            help="Select your workout exercise"
         )
         
-        st.slider("Target Reps", 5, 20, 10, key="target_reps")
+        st.slider("Target Reps", 5, 20, 10, key="target_reps", help="Set your rep goal")
         
-        if st.button("🎥 Start Camera" if not st.session_state.camera_on else "🛑 Stop Camera"):
-            st.session_state.camera_on = not st.session_state.camera_on
-            
-        if st.button("🔄 Reset Counter"):
-            st.session_state.rep_count = 0
-            
-        st.header("Stats")
-        st.metric("Reps Completed", st.session_state.rep_count)
-        st.metric("Progress", f"{st.session_state.rep_count}/{st.session_state.target_reps}")
+        st.markdown("---")
+        st.markdown("### 🎬 Controls")
+        st.markdown("")
         
-        # Progress bar
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("▶️ Start" if not st.session_state.camera_on else "⏹️ Stop", use_container_width=True):
+                st.session_state.camera_on = not st.session_state.camera_on
+        with col2:
+            if st.button("🔄 Reset", use_container_width=True):
+                st.session_state.rep_count = 0
+        
+        st.markdown("---")
+        st.markdown("### 📊 Stats")
+        st.markdown("")
+        
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.metric("Completed", st.session_state.rep_count)
+        with col_b:
+            st.metric("Target", st.session_state.target_reps)
+        
+        # Progress bar with label
         progress = min(st.session_state.rep_count / st.session_state.target_reps, 1.0)
         st.progress(progress)
+        st.caption(f"Progress: {progress*100:.0f}%")
     
-    # Main area
-    col1, col2 = st.columns([2, 1])
+    # Main area with better spacing
+    col1, col2 = st.columns([2.5, 1.5], gap="large")
     
     with col1:
-        st.header("Live Feed")
+        st.markdown("### 📹 Live Feed")
+        st.markdown("")
         
         if st.session_state.camera_on:
             # Camera placeholder
@@ -92,46 +130,68 @@ def main():
                 
                 cap.release()
         else:
-            st.info("👆 Click 'Start Camera' to begin your workout")
-            st.image("https://via.placeholder.com/600x400/667eea/ffffff?text=Camera+Feed+Will+Appear+Here", 
-                    use_column_width=True)
+            st.info("👆 Click 'Start' to begin your workout")
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        padding: 150px 20px; border-radius: 12px; text-align: center; color: white;">
+                <h2 style="margin: 0; color: white;">🎥 Camera Feed</h2>
+                <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9);">Will appear here</p>
+            </div>
+            """, unsafe_allow_html=True)
     
     with col2:
-        st.header("Form Guide")
+        st.markdown("### 💡 Form Guide")
+        st.markdown("")
         
         if exercise == "Bicep Curls":
             st.info("""
-            **💡 Bicep Curl Form:**
-            - Keep elbows close to body
-            - Fully extend at bottom
-            - Control the movement
-            - Don't swing torso
+            **Bicep Curl Form:**
+            
+            ✓ Keep elbows close to body  
+            ✓ Fully extend at bottom  
+            ✓ Control the movement  
+            ✓ Don't swing torso
             """)
             
             # Simulate form detection
-            st.subheader("Form Check")
+            st.markdown("")
+            st.markdown("#### 🔍 Form Check")
             col_a, col_b = st.columns(2)
             with col_a:
-                st.success("✅ Elbow Position")
-                st.warning("⚠️ Arm Extension")
+                st.success("✅ Elbow")
+                st.warning("⚠️ Extension")
             with col_b:
-                st.success("✅ Wrist Stability")
-                st.error("❌ Body Sway")
+                st.success("✅ Wrist")
+                st.error("❌ Sway")
                 
         elif exercise == "Squats":
             st.info("""
-            **💡 Squat Form:**
-            - Feet shoulder-width apart
-            - Knees aligned with toes
-            - Back straight
-            - Go to parallel
+            **Squat Form:**
+            
+            ✓ Feet shoulder-width apart  
+            ✓ Knees aligned with toes  
+            ✓ Back straight  
+            ✓ Go to parallel
+            """)
+        
+        elif exercise == "Push-ups":
+            st.info("""
+            **Push-up Form:**
+            
+            ✓ Keep body straight  
+            ✓ Elbows at 45°  
+            ✓ Full range of motion  
+            ✓ Engage core
             """)
             
-        st.header("Workout Tips")
-        st.write("• Warm up before starting")
-        st.write("• Maintain proper form")
-        st.write("• Breathe consistently")
-        st.write("• Stay hydrated")
+        st.markdown("")
+        st.markdown("#### 🎯 Quick Tips")
+        st.markdown("""
+        • Warm up before starting  
+        • Maintain proper form  
+        • Breathe consistently  
+        • Stay hydrated
+        """)
 
 if __name__ == "__main__":
     main()
