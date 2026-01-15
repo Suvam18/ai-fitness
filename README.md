@@ -1,26 +1,109 @@
-# AI Fitness Trainer with Pose Estimation 🏋️‍♂️
+# 🏋️‍♂️ AI Fitness Trainer with Real-Time Pose Estimation
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://python.org)
-[![OpenCV](https://img.shields.io/badge/OpenCV-4.8-green)](https://opencv.org)
-[![MediaPipe](https://img.shields.io/badge/MediaPipe-0.10-orange)](https://mediapipe.dev)
+An intelligent AI-powered fitness trainer that uses **Computer Vision**, **MediaPipe**, and **OpenCV** to provide real-time posture feedback, count exercise repetitions, and track progress — all through a simple webcam.  
+This project aims to make at-home fitness training more accessible, interactive, and accurate.
 
-An intelligent fitness trainer that uses AI and computer vision to provide real-time exercise form feedback and track your workouts.
+---
 
 ## ✨ Features
 
-- **Real-time Pose Detection**: Accurate human pose estimation using MediaPipe
-- **Exercise Form Analysis**: AI-powered analysis of exercise technique
-- **Audio Feedback**: Real-time voice guidance for form corrections
-- **Workout Tracking**: Comprehensive progress monitoring and history
-- **Multiple Exercises**: Support for bicep curls, squats, push-ups, and more
-- **User-friendly Interface**: Streamlit-based dashboard and OpenCV camera view
+- **Real-time Pose Detection** using MediaPipe (33 body landmarks)
+- **Exercise Form Analysis** with angle-based posture validation
+- **Repetition Counting** for multiple exercises
+- **Audio Feedback** for correction & guidance
+- **Web Dashboard Support** using Streamlit
+- **Lightweight & CPU-friendly** (no GPU required)
+- **Extensible Exercise Modules**
+
+Supported exercise categories include:
+
+✔ Bicep curls  
+✔ Squats  
+✔ Push-ups  
+✔ Shoulder press  
+✔ Extendable for more exercises
+
+---
 
 ## 🚀 Quick Start
 
-### Installation
-## 🌐 Web Interfaces
-### Professional Website
+### **1. Clone the Repository**
+
 ```bash
+git clone https://github.com/PathakAman66/ai-fitness-trainer.git
+cd ai-fitness-trainer
+```
+
+### **2. Install Dependencies**
+
+Recommended installation:
+
+```bash
+pip install -r requirements.txt
+```
+
+If this fails, fallback:
+
+```bash
+pip install mediapipe opencv-python numpy streamlit pyttsx3
+```
+
+---
+
+## 🏃‍♂️ Running the Fitness Trainer
+
+### **Option A — Webcam Fitness Trainer (OpenCV)**
+
+```bash
+python core/run_fitness_trainer.py
+```
+
+This launches the webcam and starts pose detection, rep counting, and feedback.
+
+---
+
+## 🌐 Running the Web Dashboard
+
+This provides a more interactive UI for exercise monitoring.
+
+### **Step 1 — Launch Web App**
+
+```bash
+python web/run_website.py
+```
+
+### **Step 2 — Open in Browser**
+
+Default Streamlit URL:
+
+```
+http://localhost:8501
+```
+
+Features include:
+
+✔ Camera feed  
+✔ Exercise selection  
+✔ Real-time feedback overlay  
+✔ Progress display  
+
+---
+
+## 🌍 Alternative HTML Web Server
+
+If Streamlit is not preferred:
+
+```bash
+python web/web_server.py
+```
+
+This exposes an HTML interface via a lightweight server.
+
+---
+
+## 🧱 Project Structure
+
+```text
 ai-fitness-trainer/
 │
 ├── core/                      # Core AI & fitness logic
@@ -52,18 +135,76 @@ ai-fitness-trainer/
 │   └── requirements-simple.txt
 │
 ├── run.py                     # Main entry point
-├── setup.py                   # Project setup & packaging
-├── README.md
+├── setup.py                   # Packaging/build
 ├── CODE_OF_CONDUCT.md
+└── README.md
+```
 
-# Launch HTML website
-python web/run_website.py
+---
 
-# Or directly
-python web/web_server.py
+## 📊 Exercise Detection Logic (Overview)
 
-1. Clone the repository:
+| Exercise | Detection Metric | Key Angle |
+|---|---|---|
+| Bicep Curl | Elbow flexion | Shoulder → Elbow → Wrist |
+| Squat | Hip/Knee flexion | Shoulder → Hip → Knee |
+| Push-up | Chest vertical depth | Shoulder → Elbow |
+| Shoulder Press | Vertical motion | Wrist → Elbow → Shoulder |
+
+---
+
+## 🧪 Testing
+
+Run tests to verify environment:
+
 ```bash
-git clone https://github.com/PathakAman66/ai-fitness-trainer.git
+python tests/test_setup.py
+```
 
-cd ai-fitness-trainer
+Or minimal test:
+
+```bash
+python tests/simple_test.py
+```
+
+---
+
+## 📦 Requirements
+
+- **Python:** 3.8+
+- **Camera:** Any 720p webcam
+- **OS:** Windows / Linux / macOS
+- **CPU:** Runs without GPU
+
+Optional performance boost if GPU exists.
+
+---
+
+## 🧩 Extending the System
+
+New exercises can be added by:
+
+1. Adding angle logic in `core/`
+2. Registering exercise in trainer
+3. Updating web UI for exercise selection
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions including:
+
+- New exercise models
+- Pose detection improvements
+- UI enhancements
+- Documentation
+- Bug fixes
+
+Refer to `CONTRIBUTING.md` for contribution flow.
+
+---
+
+## ⭐ Show Support
+
+If this project helped you, consider giving it a ⭐ on GitHub to support development!
+
