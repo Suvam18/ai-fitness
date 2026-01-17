@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Fitness Dashboard</title>
+
+ 
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&family=Montserrat:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+ 
+
+<header>
+  <h1>
+    <span class="color-primary">🏋️AI Fitness</span> <span class="color-secondary">Dashboard</span>
+  </h1>
+</header>
+
+  <section class="summary">
+    <div>
+      Total Workouts
+      <span id="total-workouts">0</span>
+    </div>
+    <div>
+      Total Calories
+      <span id="total-calories">0</span>
+    </div>
+    <div>
+      Total Hours
+      <span id="total-hours">0</span>
+    </div>
+  </section>
+
+
+  <section class="chart-container">
+    <canvas id="progressChart"></canvas>
+    <canvas id="durationChart"></canvas>
+  </section>
+
+  <section class="recent-workouts">
+    <h2>Recent Workouts</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Workout</th>
+          <th>Duration (min)</th>
+          <th>Calories</th>
+        </tr>
+      </thead>
+      <tbody id="workoutsTable">
+       
+      </tbody>
+    </table>
+  </section>
+
+
+  <script src="dashboard.js" defer></script>
+</body>
+</html>
