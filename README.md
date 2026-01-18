@@ -91,27 +91,39 @@ python3 backend/tests/dependency_test.py
 
 ## Usage Guide
 
-### Option A: Desktop Application (Recommended)
+### Option A: Desktop Application
 
 This version runs locally using OpenCV windows and offers the best performance.
 
 ```bash
-# Launch the main application (6 exercises + analytics)
-python3 backend/core/main.py
-
+# Launch the desktop application (6 exercises + analytics)
+python3 backend/core/app.py
 ```
 
-### Option B: Web Interface
+### Option B: FastAPI REST API
+
+Run the backend API server for web/mobile applications.
+
+```bash
+# Start the API server
+python3 -m backend.api.main
+
+# Or using uvicorn directly
+uvicorn backend.api.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+*Access the API documentation at: `http://localhost:8000/docs`*
+
+### Option C: Web Interface (Streamlit)
 
 A browser-based dashboard powered by Streamlit.
 
 ```bash
 # Run Streamlit interface
-streamlit run frontend/web/streamlit_interface.py
-
+streamlit run frontend/streamlit_interface.py
 ```
 
-*Access the interface at: `http://localhost:8501*`
+*Access the interface at: `http://localhost:8501`*
 
 ---
 
@@ -133,22 +145,39 @@ streamlit run frontend/web/streamlit_interface.py
 ```text
 ai-fitness-trainer/
 │
-├── backend/                   # Application Logic
-│  
-│   ├── core/                  # Core AI algorithms
-│   │   ├── main.py            # Primary application loop
-│   ├── utils/                 # Utilities (Data storage, helpers)
-│   ├── data/                  # JSON report storage
-│   └── tests/                 # Unit and integration tests
+├── backend/                   # Backend Components
+│   ├── api/                   # FastAPI REST API
+│   │   ├── main.py           # API endpoints and application
+│   │   ├── models.py         # Pydantic data models
+│   │   ├── pose_detector.py  # Pose detection service
+│   │   ├── exercise_analyzer.py  # Exercise analysis service
+│   │   ├── workout_session.py    # Session management
+│   │   └── session_manager.py    # Session state manager
+│   │
+│   ├── core/                  # Standalone Desktop App
+│   │   └── app.py            # Desktop application with CV2 GUI
+│   │
+│   ├── utils/                 # Shared utilities
+│   │   └── image_processor.py # Image encoding/decoding
+│   │
+│   ├── data/                  # Data storage
+│   │   └── reports/          # JSON workout reports
+│   │
+│   └── tests/                 # Test suite
+│       └── test_*.py         # Unit and integration tests
 │
-├── frontend/                  # User Interface
-│   ├── streamlit_app.py       # Streamlit application files
-│   ├── web/               # HTML/CSS landing pages
+├── frontend/                  # User Interfaces
+│   ├── streamlit_interface.py # Streamlit web dashboard
+│   ├── web-interface/         # HTML/CSS landing pages
 │   └── assets/                # Images and static resources
 │
-├── config/                    # Configuration and requirements
-└── docs/                      # Documentation and guidelines
-
+├── config/                    # Configuration
+│   └── requirements.txt       # Python dependencies
+│
+└── docs/                      # Documentation
+    ├── CONTRIBUTING.md
+    ├── CODE_OF_CONDUCT.md
+    └── architecture.md
 ```
 
 ---
