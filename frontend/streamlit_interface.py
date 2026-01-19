@@ -281,12 +281,87 @@ def main():
             feedback_placeholder = st.empty()
             
             if start_camera:
-                cap = cv2.VideoCapture(0)
+                # Initialize camera with error handling
+                cap = None
+                camera_initialized = False
                 
-                while cap.isOpened() and not stop_camera:
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
+                try:
+                    # Try default camera
+                    st.info("🔍 Initializing camera...")
+                    cap = cv2.VideoCapture(0)
+                    
+                    if not cap.isOpened():
+                        # Try alternative camera indices
+                        for i in range(1, 5):
+                            st.warning(f"Trying camera index {i}...")
+                            cap = cv2.VideoCapture(i)
+                            if cap.isOpened():
+                                st.success(f"✅ Camera initialized on index {i}")
+                                camera_initialized = True
+                                break
+                    
+                    if not cap.isOpened():
+                        st.error("❌ **Camera Error**: No camera devices found!")
+                        st.error("**Troubleshooting Steps:**")
+                        st.markdown("""
+                        - ✅ Ensure your webcam is connected and powered on
+                        - ✅ Close other applications using the camera (Zoom, Skype, etc.)
+                        - ✅ Check camera permissions in browser/system settings
+                        - ✅ Try refreshing the page
+                        - ✅ For external webcams, ensure proper drivers are installed
+                        """)
+                        st.stop()
+                    
+                    # Test camera by reading a frame
+                    ret, test_frame = cap.read()
+                    if not ret or test_frame is None:
+                        st.error("❌ **Camera Error**: Camera initialized but cannot capture frames!")
+                        st.error("This might indicate hardware issues or driver problems.")
+                        if cap:
+                            cap.release()
+                        st.stop()
+                    
+                    camera_initialized = True
+                    st.success("✅ Camera ready!")
+                    
+                except Exception as e:
+                    st.error(f"❌ **Camera Initialization Failed**: {str(e)}")
+                    st.error("**Possible causes:**")
+                    st.markdown("""
+                    - Missing OpenCV installation
+                    - Camera hardware failure
+                    - System permission issues
+                    - Driver compatibility problems
+                    """)
+                    if cap:
+                        cap.release()
+                    st.stop()
+                
+                if camera_initialized:
+                    frame_failures = 0
+                    max_failures = 10
+                    
+                    while cap.isOpened() and not stop_camera:
+                        ret, frame = cap.read()
+                        if not ret:
+                            frame_failures += 1
+                            st.warning(f"⚠️ Frame capture failed (attempt {frame_failures}/{max_failures})")
+                            
+                            if frame_failures >= max_failures:
+                                st.error("❌ **Camera Error**: Too many frame capture failures!")
+                                st.error("**Possible causes:**")
+                                st.markdown("""
+                                - Camera disconnected during use
+                                - Hardware failure
+                                - System resource issues
+                                """)
+                                break
+                            
+                            time.sleep(0.1)
+                            continue
+                        
+                        # Reset failure counter
+                        frame_failures = 0
                     
                     # Detect pose via API
                     pose_result = APIClient.detect_pose(frame, draw_landmarks=True)
