@@ -6,6 +6,47 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from typing import Optional, Dict, List
 from uuid import UUID
 from enum import Enum
+import base64
+
+
+def validate_session_id(session_id: str) -> str:
+    """Validate and return session ID if it's a valid UUID"""
+    try:
+        UUID(session_id)
+        return session_id
+    except ValueError:
+        raise ValueError(f"Invalid session ID format: {session_id}. Must be a valid UUID")
+
+
+def validate_base64_image(image_data: str) -> str:
+    """Validate base64 encoded image data"""
+    if not image_data or len(image_data.strip()) == 0:
+        raise ValueError("Image data cannot be empty")
+    
+    # Remove data URI prefix if present
+    if ',' in image_data:
+        image_data = image_data.split(',', 1)[1]
+    
+    # Remove whitespace
+    image_data = image_data.strip()
+    
+    # Check if it's valid base64
+    try:
+        # Remove padding characters and check length is multiple of 4
+        image_data_no_padding = image_data.rstrip('=')
+        if len(image_data_no_padding) % 4 != 0:
+            raise ValueError("Invalid base64 string length")
+        
+        # Try to decode to validate
+        base64.b64decode(image_data)
+    except Exception:
+        raise ValueError("Invalid base64 encoded image data")
+    
+    # Check minimum size (very small images are likely corrupted)
+    if len(image_data) < 100:  # Base64 encoded 64x64 RGB image is about 12KB, so 100 chars is very small
+        raise ValueError("Image data appears to be too small or corrupted")
+    
+    return image_data
 
 
 def validate_uuid_format(v: str, field_name: str = "session_id") -> str:
@@ -87,6 +128,14 @@ class AnalysisRequest(BaseModel):
     key_points: Dict[str, List[float]] = Field(..., description="Body landmark coordinates from pose detection")
     image: Optional[str] = Field(default=None, description="Optional base64 encoded image for additional processing")
 
+    @field_validator('image')
+    @classmethod
+    def validate_optional_image(cls, v: Optional[str]) -> Optional[str]:
+        """Validate optional image if provided"""
+        if v is not None:
+            validate_base64_image(v)
+        return v
+
     @field_validator('session_id')
     @classmethod
     def validate_session_id(cls, v: str) -> str:
@@ -132,6 +181,26 @@ class AnalysisResponse(BaseModel):
     errors: List[str] = Field(default_factory=list, description="Form error messages")
     calories: float = Field(..., description="Calories burned in this session")
     duration: Optional[float] = Field(default=None, description="Duration in seconds (for time-based exercises like plank)")
+    
+    # Real-time quality feedback fields
+    quality_score: float = Field(
+        ...,
+        description="Pose quality score (0-100)",
+        ge=0.0,
+        le=100.0
+    )
+    quality_category: str = Field(
+        ...,
+        description="Feedback category: 'poor', 'average', or 'excellent'"
+    )
+    real_time_feedback: str = Field(
+        ...,
+        description="Trainer-like feedback message"
+    )
+    historical_average: Optional[float] = Field(
+        default=None,
+        description="Average quality score for this session"
+    )
 
 
 # Session Management Models
@@ -139,6 +208,14 @@ class SessionStartRequest(BaseModel):
     """Request model for starting a workout session"""
     exercise_type: ExerciseType = Field(..., description="Type of exercise for this session")
     user_id: Optional[str] = Field(default=None, description="Optional user identifier for tracking")
+
+    @field_validator('user_id')
+    @classmethod
+    def validate_user_id(cls, v: Optional[str]) -> Optional[str]:
+        """Validate user_id if provided"""
+        if v is not None and len(v.strip()) == 0:
+            raise ValueError("user_id cannot be empty if provided")
+        return v
 
 
 class SessionResponse(BaseModel):

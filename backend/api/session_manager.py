@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 
 from backend.api.exercise_analyzer import EnhancedExerciseAnalyzer
 from backend.api.workout_session import WorkoutSession
+from backend.api.pose_quality_evaluator import PoseQualityEvaluator
 
 
 @dataclass
@@ -19,6 +20,7 @@ class SessionData:
     exercise_type: str
     analyzer: EnhancedExerciseAnalyzer
     workout_session: WorkoutSession
+    quality_evaluator: PoseQualityEvaluator
     user_id: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
     last_activity: datetime = field(default_factory=datetime.now)
@@ -69,12 +71,16 @@ class SessionManager:
             workout_session = WorkoutSession()
             workout_session.start_session(exercise_type)
             
+            # Create quality evaluator for real-time feedback
+            quality_evaluator = PoseQualityEvaluator(exercise_type)
+            
             # Store session data
             session_data = SessionData(
                 session_id=session_id,
                 exercise_type=exercise_type,
                 analyzer=analyzer,
                 workout_session=workout_session,
+                quality_evaluator=quality_evaluator,
                 user_id=user_id,
                 created_at=datetime.now(),
                 last_activity=datetime.now(),
@@ -171,6 +177,9 @@ class SessionManager:
             session_data.analyzer.current_stage = "start"
             session_data.analyzer.calories_burned = 0
             session_data.analyzer.rep_history = []
+            
+            # Reset quality evaluator history
+            session_data.quality_evaluator.reset()
             
             # Update last activity
             session_data.last_activity = datetime.now()

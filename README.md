@@ -86,10 +86,10 @@ azurecontainerapps_frontend -.-> |"http"| azurecontainerapps_backend
 ## 📸 Screenshots
 
 ### Desktop Application
-![Desktop Interface](frontend/assets/screenshots/desktop_app.png)
+![Desktop Interface](frontend/assets/screenshots/squat.png)
 
 ### Web Dashboard
-![Streamlit Dashboard](frontend/assets/screenshots/streamlit_dashboard.png)
+![Streamlit Dashboard](frontend/assets/screenshots/home.png)
 
 ## 🛠️ Quick Start
 

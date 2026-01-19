@@ -281,12 +281,87 @@ def main():
             feedback_placeholder = st.empty()
             
             if start_camera:
-                cap = cv2.VideoCapture(0)
+                # Initialize camera with error handling
+                cap = None
+                camera_initialized = False
                 
-                while cap.isOpened() and not stop_camera:
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
+                try:
+                    # Try default camera
+                    st.info("🔍 Initializing camera...")
+                    cap = cv2.VideoCapture(0)
+                    
+                    if not cap.isOpened():
+                        # Try alternative camera indices
+                        for i in range(1, 5):
+                            st.warning(f"Trying camera index {i}...")
+                            cap = cv2.VideoCapture(i)
+                            if cap.isOpened():
+                                st.success(f"✅ Camera initialized on index {i}")
+                                camera_initialized = True
+                                break
+                    
+                    if not cap.isOpened():
+                        st.error("❌ **Camera Error**: No camera devices found!")
+                        st.error("**Troubleshooting Steps:**")
+                        st.markdown("""
+                        - ✅ Ensure your webcam is connected and powered on
+                        - ✅ Close other applications using the camera (Zoom, Skype, etc.)
+                        - ✅ Check camera permissions in browser/system settings
+                        - ✅ Try refreshing the page
+                        - ✅ For external webcams, ensure proper drivers are installed
+                        """)
+                        st.stop()
+                    
+                    # Test camera by reading a frame
+                    ret, test_frame = cap.read()
+                    if not ret or test_frame is None:
+                        st.error("❌ **Camera Error**: Camera initialized but cannot capture frames!")
+                        st.error("This might indicate hardware issues or driver problems.")
+                        if cap:
+                            cap.release()
+                        st.stop()
+                    
+                    camera_initialized = True
+                    st.success("✅ Camera ready!")
+                    
+                except Exception as e:
+                    st.error(f"❌ **Camera Initialization Failed**: {str(e)}")
+                    st.error("**Possible causes:**")
+                    st.markdown("""
+                    - Missing OpenCV installation
+                    - Camera hardware failure
+                    - System permission issues
+                    - Driver compatibility problems
+                    """)
+                    if cap:
+                        cap.release()
+                    st.stop()
+                
+                if camera_initialized:
+                    frame_failures = 0
+                    max_failures = 10
+                    
+                    while cap.isOpened() and not stop_camera:
+                        ret, frame = cap.read()
+                        if not ret:
+                            frame_failures += 1
+                            st.warning(f"⚠️ Frame capture failed (attempt {frame_failures}/{max_failures})")
+                            
+                            if frame_failures >= max_failures:
+                                st.error("❌ **Camera Error**: Too many frame capture failures!")
+                                st.error("**Possible causes:**")
+                                st.markdown("""
+                                - Camera disconnected during use
+                                - Hardware failure
+                                - System resource issues
+                                """)
+                                break
+                            
+                            time.sleep(0.1)
+                            continue
+                        
+                        # Reset failure counter
+                        frame_failures = 0
                     
                     # Detect pose via API
                     pose_result = APIClient.detect_pose(frame, draw_landmarks=True)
@@ -317,19 +392,43 @@ def main():
                                 2
                             )
                             
-                            # Display feedback
+                            # Display real-time quality feedback
                             with feedback_placeholder.container():
-                                # Show errors
+                                # Extract quality data from analysis response
+                                quality_score = analysis.get('quality_score', 0)
+                                quality_category = analysis.get('quality_category', 'poor')
+                                feedback_message = analysis.get('real_time_feedback', '')
+                                historical_avg = analysis.get('historical_average')
+                                
+                                # Display color-coded feedback based on category
+                                if feedback_message:
+                                    if quality_category == 'poor':
+                                        st.error(f"🔴 {feedback_message}")
+                                    elif quality_category == 'average':
+                                        st.warning(f"🟡 {feedback_message}")
+                                    else:  # excellent
+                                        st.success(f"🟢 {feedback_message}")
+                                
+                                # Display quality score progress bar
+                                st.progress(quality_score / 100.0)
+                                
+                                # Display current quality score and historical average side-by-side
+                                col1, col2 = st.columns(2)
+                                col1.metric("Current Quality", f"{quality_score:.0f}/100")
+                                if historical_avg is not None:
+                                    col2.metric("Session Average", f"{historical_avg:.0f}/100")
+                                
+                                # Show errors (legacy feedback)
                                 if analysis.get('errors'):
                                     for error in analysis['errors']:
                                         st.error(f"❌ {error}")
                                 
-                                # Show warnings
+                                # Show warnings (legacy feedback)
                                 if analysis.get('warnings'):
                                     for warning in analysis['warnings']:
                                         st.warning(f"⚠️ {warning}")
                                 
-                                # Show positive feedback
+                                # Show positive feedback (legacy feedback)
                                 if analysis.get('feedback'):
                                     for fb in analysis['feedback']:
                                         st.success(f"✅ {fb}")

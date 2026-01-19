@@ -498,19 +498,27 @@ async def analyze_exercise(request: AnalysisRequest):
     Uses the session's Exercise Analyzer to maintain state across multiple frames.
     Returns rep count, stage, angles, feedback, warnings, errors, and calories.
     
-    **Requirements: 2.1, 6.2**
+    **Requirements: 2.1, 4.1, 4.2, 6.2, 8.2, 8.3**
     - 2.1: WHEN a client requests form analysis with key points and exercise type 
            THEN the FastAPI Service SHALL return an Analysis Result containing 
            rep count, stage, angles, feedback, warnings, and errors
+    - 4.1: WHEN the System has recorded at least 3 repetitions 
+           THEN the System SHALL calculate a historical average pose quality score
+    - 4.2: WHEN comparing current pose quality to thresholds 
+           THEN the System SHALL use the historical average as a reference point
     - 6.2: WHEN a client submits frames for analysis with a session ID 
            THEN the FastAPI Service SHALL use the existing Exercise Analyzer 
            to maintain rep count and stage
+    - 8.2: WHEN the System stores pose quality scores 
+           THEN the System SHALL maintain a history for the current session
+    - 8.3: WHEN a repetition is completed 
+           THEN the System SHALL record the average pose quality score for that repetition
     
     Args:
         request: AnalysisRequest containing session_id, exercise_type, key_points, and optional image
     
     Returns:
-        AnalysisResponse with analysis results
+        AnalysisResponse with analysis results including quality feedback
     
     Raises:
         HTTPException: 404 if session not found
@@ -559,7 +567,60 @@ async def analyze_exercise(request: AnalysisRequest):
             calories=analysis_result.get('calories', 0.0)
         )
         
-        # Prepare response
+        # Calculate quality feedback using PoseQualityEvaluator
+        # Calculate form metrics
+        form_metrics = session_data.quality_evaluator.calculate_form_metrics(
+            analysis_result,
+            key_points_tuples
+        )
+        
+        # Handle no pose detected scenario
+        if not key_points_tuples or not form_metrics:
+            # No pose detected or no valid metrics - return neutral feedback
+            logger.info(f"No pose detected or no valid metrics for session {request.session_id}")
+            
+            response = AnalysisResponse(
+                session_id=request.session_id,
+                rep_count=analysis_result.get('rep_count', 0),
+                stage=ExerciseStage(analysis_result.get('stage', 'start')),
+                angles=analysis_result.get('angles', {}),
+                feedback=analysis_result.get('feedback', []),
+                warnings=analysis_result.get('warnings', []),
+                errors=analysis_result.get('errors', []),
+                calories=analysis_result.get('calories', 0.0),
+                duration=analysis_result.get('duration', None),
+                quality_score=0.0,
+                quality_category='poor',
+                real_time_feedback="Step into the camera frame to begin your workout!",
+                historical_average=session_data.quality_evaluator.get_historical_average()
+            )
+            
+            return response
+        
+        # Calculate quality score
+        quality_score = session_data.quality_evaluator.calculate_quality_score(
+            form_metrics,
+            analysis_result
+        )
+        
+        # Determine feedback category
+        category = session_data.quality_evaluator.get_feedback_category(quality_score)
+        
+        # Generate feedback message
+        feedback_message = session_data.quality_evaluator.generate_feedback_message(
+            quality_score,
+            category,
+            form_metrics,
+            analysis_result
+        )
+        
+        # Update history
+        session_data.quality_evaluator.update_history(quality_score)
+        
+        # Get historical average
+        historical_average = session_data.quality_evaluator.get_historical_average()
+        
+        # Prepare response with quality feedback
         response = AnalysisResponse(
             session_id=request.session_id,
             rep_count=analysis_result.get('rep_count', 0),
@@ -569,7 +630,11 @@ async def analyze_exercise(request: AnalysisRequest):
             warnings=analysis_result.get('warnings', []),
             errors=analysis_result.get('errors', []),
             calories=analysis_result.get('calories', 0.0),
-            duration=analysis_result.get('duration', None)
+            duration=analysis_result.get('duration', None),
+            quality_score=quality_score,
+            quality_category=category,
+            real_time_feedback=feedback_message,
+            historical_average=historical_average
         )
         
         return response
@@ -681,9 +746,19 @@ async def end_session(session_id: str = Depends(validate_session_id)):
     
     Raises:
         HTTPException: 404 if session not found
+        HTTPException: 400 if session_id is invalid
         HTTPException: 503 if session manager is not initialized
         HTTPException: 500 if ending session fails
     """
+    # Validate session ID format
+    try:
+        validate_session_id(session_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    
     if session_manager is None:
         raise HTTPException(
             status_code=503,
@@ -743,9 +818,19 @@ async def reset_session(session_id: str = Depends(validate_session_id)):
         SessionResetResponse confirming the reset
     
     Raises:
+        HTTPException: 400 if session_id is invalid
         HTTPException: 404 if session not found
         HTTPException: 503 if session manager is not initialized
     """
+    # Validate session ID format
+    try:
+        validate_session_id(session_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    
     if session_manager is None:
         raise HTTPException(
             status_code=503,
@@ -792,8 +877,21 @@ async def get_sessions(
         SessionListResponse with list of sessions and pagination info
     
     Raises:
+        HTTPException: 400 if parameters are invalid
         HTTPException: 503 if session manager is not initialized
     """
+    # Validate pagination parameters
+    if limit < 1 or limit > 1000:
+        raise HTTPException(
+            status_code=400,
+            detail="limit must be between 1 and 1000"
+        )
+    if offset < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="offset must be non-negative"
+        )
+    
     if session_manager is None:
         raise HTTPException(
             status_code=503,
@@ -867,9 +965,19 @@ async def get_session(session_id: str = Depends(validate_session_id)):
         SessionResponse with session details
     
     Raises:
+        HTTPException: 400 if session_id is invalid
         HTTPException: 404 if session not found
         HTTPException: 503 if session manager is not initialized
     """
+    # Validate session ID format
+    try:
+        validate_session_id(session_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    
     if session_manager is None:
         raise HTTPException(
             status_code=503,
