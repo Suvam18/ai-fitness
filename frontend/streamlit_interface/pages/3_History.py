@@ -1,0 +1,455 @@
+"""
+History page for the AI Fitness Trainer Streamlit application.
+
+This page displays past workout sessions with filtering capabilities,
+formatted data display, and summary statistics.
+"""
+
+import streamlit as st
+import sys
+from pathlib import Path
+
+# Add parent directory to path for imports
+parent_dir = Path(__file__).parent.parent
+sys.path.insert(0, str(parent_dir))
+
+from styles.custom_css import inject_custom_css, apply_page_config
+from styles.theme import COLORS, TYPOGRAPHY, SPACING, BORDER_RADIUS, SHADOWS
+from utils.icons import (
+    inject_material_icons_cdn,
+    get_icon_name,
+    render_icon,
+)
+from utils.state_manager import StateManager
+from components.navigation import Navigation
+from services.workout_loader import WorkoutHistoryLoader
+from services.workout_filter import WorkoutHistoryFilter
+from services.workout_formatter import WorkoutHistoryFormatter
+from services.workout_aggregator import WorkoutHistoryAggregator
+from utils.error_handler import ErrorHandler
+
+
+def load_workout_sessions():
+    """Load workout sessions from the backend data directory."""
+    # Use cached sessions if available
+    loaded_sessions = StateManager.get("loaded_sessions")
+    loader_state = StateManager.get("loader_state")
+    
+    if loaded_sessions is not None and loader_state is not None:
+        return loaded_sessions, loader_state
+    
+    # Load sessions using WorkoutHistoryLoader
+    loader = WorkoutHistoryLoader()
+    
+    try:
+        sessions = loader.load_all_sessions()
+        
+        # Store loader state for error reporting
+        loader_state = {
+            'corrupted_count': loader.get_corrupted_file_count(),
+            'has_errors': loader.has_load_errors(),
+            'errors': loader.load_errors
+        }
+        
+        # Cache sessions and loader state in session state
+        StateManager.set("loaded_sessions", sessions)
+        StateManager.set("loader_state", loader_state)
+        
+        return sessions, loader_state
+    except Exception as e:
+        ErrorHandler.handle_exception(
+            e,
+            "loading workout history",
+            show_to_user=True,
+            fallback_message="Failed to load workout history. Please try refreshing the page."
+        )
+        return [], {'corrupted_count': 0, 'has_errors': True, 'errors': {}}
+
+
+def render_page_header():
+    """Render the history page header."""
+    st.title("📜 Workout History")
+    st.write("Review your past workout sessions and track your progress over time")
+    st.divider()
+
+
+def render_filter_controls(sessions):
+    """
+    Render filter controls dropdown for exercise type selection.
+    
+    Args:
+        sessions: List of all workout sessions
+        
+    Returns:
+        Selected filter value
+    """
+    # Get unique exercise types
+    exercise_types = WorkoutHistoryFilter.get_unique_exercise_types(sessions)
+    
+    # Create filter options
+    filter_options = ["All Exercises"] + [
+        WorkoutHistoryFormatter.format_exercise_name(ex) for ex in exercise_types
+    ]
+    
+    # Map display names back to internal types
+    display_to_internal = {
+        WorkoutHistoryFormatter.format_exercise_name(ex): ex 
+        for ex in exercise_types
+    }
+    display_to_internal["All Exercises"] = "all"
+    
+    # Render filter section
+    st.subheader("🔍 Filter Workouts")
+    st.write("")
+    
+    # Create columns for filter controls
+    col1, col2, col3 = st.columns([2, 1, 1])
+    
+    with col1:
+        # Exercise type filter dropdown
+        selected_display = st.selectbox(
+            "Exercise Type",
+            options=filter_options,
+            index=0,
+            key="exercise_filter_dropdown",
+            label_visibility="collapsed"
+        )
+        
+        # Convert display name back to internal type
+        selected_filter = display_to_internal[selected_display]
+        
+        # Update session state
+        StateManager.set("selected_exercise_filter", selected_filter)
+        
+        return selected_filter
+    
+    with col2:
+        # Refresh button
+        if st.button("🔄 Refresh", use_container_width=True):
+            StateManager.clear_history_cache()
+            st.rerun()
+    
+    with col3:
+        # Clear filter button
+        if st.button("✖️ Clear Filter", use_container_width=True):
+            StateManager.set("selected_exercise_filter", "all")
+            st.rerun()
+
+
+def render_summary_statistics(sessions):
+    """
+    Render summary statistics cards showing totals.
+    
+    Args:
+        sessions: List of workout sessions to aggregate
+    """
+    # Calculate aggregate statistics
+    total_workouts = WorkoutHistoryAggregator.calculate_total_workouts(sessions)
+    total_reps = WorkoutHistoryAggregator.calculate_total_reps(sessions)
+    total_calories = WorkoutHistoryAggregator.calculate_total_calories(sessions)
+    total_duration = WorkoutHistoryAggregator.calculate_total_duration(sessions)
+    
+    # Format duration
+    duration_formatted = WorkoutHistoryFormatter.format_duration(total_duration)
+    
+    # Render statistics cards
+    st.subheader("📊 Summary Statistics")
+    st.write("")
+    
+    # Create columns for metric cards
+    col1, col2, col3, col4 = st.columns(4)
+    
+    metrics = [
+        {
+            "icon": "fitness_center",
+            "value": str(total_workouts),
+            "label": "Total Workouts",
+            "color": COLORS['primary'],
+        },
+        {
+            "icon": "repeat",
+            "value": str(total_reps),
+            "label": "Total Reps",
+            "color": COLORS['secondary'],
+        },
+        {
+            "icon": "local_fire_department",
+            "value": f"{total_calories:.1f}",
+            "label": "Total Calories",
+            "color": COLORS['accent'],
+        },
+        {
+            "icon": "schedule",
+            "value": duration_formatted,
+            "label": "Total Duration",
+            "color": COLORS['info'],
+        },
+    ]
+    
+    for col, metric in zip([col1, col2, col3, col4], metrics):
+        with col:
+            st.metric(
+                label=metric['label'],
+                value=metric['value'],
+                delta=None
+            )
+
+
+def render_session_card(session):
+    """
+    Render a single workout session card.
+    
+    Args:
+        session: Workout session dictionary
+    """
+    # Format session data
+    exercise_name = WorkoutHistoryFormatter.format_exercise_name(
+        session.get('exercise', 'Unknown')
+    )
+    date_formatted = WorkoutHistoryFormatter.format_date(
+        session.get('start_time', '')
+    )
+    duration_formatted = WorkoutHistoryFormatter.format_duration(
+        session.get('duration', 0)
+    )
+    reps = session.get('reps', 0)
+    calories = session.get('calories', 0.0)
+    status = session.get('status', 'unknown')
+    
+    # Use Streamlit's native container
+    with st.container():
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            st.subheader(f"💪 {exercise_name}")
+            st.caption(f"📅 {date_formatted}")
+            
+        with col2:
+            if status.lower() == 'completed':
+                st.success(status.upper())
+            elif status.lower() == 'active':
+                st.info(status.upper())
+            else:
+                st.warning(status.upper())
+        
+        # Metrics row
+        metric_col1, metric_col2, metric_col3 = st.columns(3)
+        with metric_col1:
+            st.metric("Reps", reps)
+        with metric_col2:
+            st.metric("Duration", duration_formatted)
+        with metric_col3:
+            st.metric("Calories", f"{calories:.1f}")
+        
+        st.divider()
+
+
+def render_session_list(sessions):
+    """
+    Render list of workout sessions with formatted data.
+    
+    Args:
+        sessions: List of workout sessions to display
+    """
+    st.subheader(f"📝 Recent Sessions ({len(sessions)})")
+    st.write("")
+    
+    # Render each session card
+    for session in sessions:
+        render_session_card(session)
+
+
+def render_empty_state(filter_applied=False):
+    """
+    Render empty state when no sessions exist or filter returns no results.
+    
+    Args:
+        filter_applied: Whether a filter is currently applied
+    """
+    if filter_applied:
+        st.info("🔍 No workout sessions match your current filter. Try selecting a different exercise type or clear the filter.")
+    else:
+        st.info("💪 You haven't completed any workout sessions yet. Start your first workout to begin tracking your progress!")
+    
+    # Add action button
+    if not filter_applied:
+        if st.button("🏋️ Start Your First Workout", use_container_width=True):
+            StateManager.set_current_page("workout")
+            st.switch_page("pages/2_Workout.py")
+
+
+def inject_hover_styles():
+    """Inject CSS for hover effects on session cards and dark mode support."""
+    st.markdown(
+        f"""
+        <style>
+        /* Dark mode CSS variables */
+        :root {{
+            --text-color: #111827;
+            --text-secondary: #6b7280;
+            --card-bg: #f9fafb;
+            --border-color: #e5e7eb;
+        }}
+        
+        @media (prefers-color-scheme: dark) {{
+            :root {{
+                --text-color: #f9fafb;
+                --text-secondary: #9ca3af;
+                --card-bg: #1f2937;
+                --border-color: #374151;
+            }}
+        }}
+        
+        [data-testid="stAppViewContainer"][data-theme="dark"] {{
+            --text-color: #f9fafb;
+            --text-secondary: #9ca3af;
+            --card-bg: #1f2937;
+            --border-color: #374151;
+        }}
+        
+        [data-testid="stAppViewContainer"][data-theme="dark"] h1,
+        [data-testid="stAppViewContainer"][data-theme="dark"] h2,
+        [data-testid="stAppViewContainer"][data-theme="dark"] h3 {{
+            color: var(--text-color) !important;
+        }}
+        
+        [data-testid="stAppViewContainer"][data-theme="dark"] p {{
+            color: var(--text-secondary) !important;
+        }}
+        
+        /* Remove white space at top */
+        [data-testid="stHeader"] {{
+            background-color: transparent !important;
+        }}
+        
+        [data-testid="stToolbar"] {{
+            background-color: transparent !important;
+        }}
+        
+        [data-testid="stToolbar"] > div:not(:first-child) {{
+            display: none !important;
+        }}
+        
+        .main .block-container {{
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+        }}
+        
+        section[data-testid="stSidebar"] > div:first-child {{
+            padding-top: 1rem !important;
+        }}
+        
+        /* Fix button text visibility in both light and dark mode */
+        .stButton > button {{
+            color: #ffffff !important;
+            background-color: #2563eb !important;
+        }}
+        
+        .stButton > button:hover {{
+            background-color: #1e40af !important;
+            color: #ffffff !important;
+        }}
+        
+        /* Fix button text in dark mode */
+        [data-testid="stAppViewContainer"][data-theme="dark"] .stButton > button {{
+            color: #ffffff !important;
+            background-color: #2563eb !important;
+        }}
+        
+        [data-testid="stAppViewContainer"][data-theme="dark"] .stButton > button:hover {{
+            background-color: #1e40af !important;
+            color: #ffffff !important;
+        }}
+        
+        /* Hover effects */
+        .session-card:hover {{
+            transform: translateY(-2px);
+            box-shadow: {SHADOWS['lg']};
+            border-color: {COLORS['primary_light']};
+        }}
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {{
+            .session-card {{
+                padding: {SPACING['md']};
+            }}
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def main():
+    """Main function to render the History page."""
+    # Apply page configuration
+    apply_page_config(
+        page_title="History - AI Fitness Trainer",
+        page_icon="📜",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
+    
+    # Inject custom CSS and Material Icons
+    inject_custom_css()
+    inject_material_icons_cdn()
+    inject_hover_styles()
+    
+    # Initialize session state
+    StateManager.initialize_all()
+    
+    # Set current page
+    Navigation.set_current_page("history")
+    
+    # Render navigation
+    Navigation.render_sidebar_nav()
+    
+    # Render page header
+    render_page_header()
+    
+    # Load workout sessions
+    all_sessions, loader_state = load_workout_sessions()
+    
+    # Show warning for corrupted files if any
+    if loader_state.get('corrupted_count', 0) > 0:
+        ErrorHandler.render_corrupted_data_warning(loader_state['corrupted_count'])
+    
+    # Check if any sessions exist
+    if not all_sessions:
+        # Display empty state
+        render_empty_state(filter_applied=False)
+    else:
+        # Render filter controls
+        selected_filter = render_filter_controls(all_sessions)
+        
+        # Apply filter to sessions
+        filtered_sessions = WorkoutHistoryFilter.filter_by_exercise(
+            all_sessions, selected_filter
+        )
+        
+        # Sort sessions in reverse chronological order (newest first)
+        sorted_sessions = WorkoutHistoryFilter.sort_by_date(
+            filtered_sessions, reverse=True
+        )
+        
+        # Check if filtered results are empty
+        if not sorted_sessions:
+            # Display empty state for filtered results
+            render_empty_state(filter_applied=True)
+        else:
+            # Render summary statistics
+            render_summary_statistics(sorted_sessions)
+            
+            # Add divider
+            st.divider()
+            
+            # Render session list
+            render_session_list(sorted_sessions)
+    
+    # Footer
+    st.divider()
+    st.caption("AI Fitness Trainer © 2024 | Track Your Progress")
+
+
+if __name__ == "__main__":
+    main()
