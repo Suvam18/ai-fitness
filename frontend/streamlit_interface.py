@@ -317,19 +317,43 @@ def main():
                                 2
                             )
                             
-                            # Display feedback
+                            # Display real-time quality feedback
                             with feedback_placeholder.container():
-                                # Show errors
+                                # Extract quality data from analysis response
+                                quality_score = analysis.get('quality_score', 0)
+                                quality_category = analysis.get('quality_category', 'poor')
+                                feedback_message = analysis.get('real_time_feedback', '')
+                                historical_avg = analysis.get('historical_average')
+                                
+                                # Display color-coded feedback based on category
+                                if feedback_message:
+                                    if quality_category == 'poor':
+                                        st.error(f"🔴 {feedback_message}")
+                                    elif quality_category == 'average':
+                                        st.warning(f"🟡 {feedback_message}")
+                                    else:  # excellent
+                                        st.success(f"🟢 {feedback_message}")
+                                
+                                # Display quality score progress bar
+                                st.progress(quality_score / 100.0)
+                                
+                                # Display current quality score and historical average side-by-side
+                                col1, col2 = st.columns(2)
+                                col1.metric("Current Quality", f"{quality_score:.0f}/100")
+                                if historical_avg is not None:
+                                    col2.metric("Session Average", f"{historical_avg:.0f}/100")
+                                
+                                # Show errors (legacy feedback)
                                 if analysis.get('errors'):
                                     for error in analysis['errors']:
                                         st.error(f"❌ {error}")
                                 
-                                # Show warnings
+                                # Show warnings (legacy feedback)
                                 if analysis.get('warnings'):
                                     for warning in analysis['warnings']:
                                         st.warning(f"⚠️ {warning}")
                                 
-                                # Show positive feedback
+                                # Show positive feedback (legacy feedback)
                                 if analysis.get('feedback'):
                                     for fb in analysis['feedback']:
                                         st.success(f"✅ {fb}")

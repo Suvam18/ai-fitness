@@ -176,3 +176,37 @@ class TestSessionManager:
         session_data = manager.get_session(session_id)
         
         assert session_data.last_activity >= original_activity
+    
+    def test_session_has_quality_evaluator(self):
+        """Test that created session has an associated quality evaluator"""
+        manager = SessionManager()
+        
+        session_id = manager.create_session("bicep_curl")
+        session_data = manager.get_session(session_id)
+        
+        assert session_data is not None
+        assert session_data.quality_evaluator is not None
+        assert session_data.quality_evaluator.exercise_type == "bicep_curl"
+        assert len(session_data.quality_evaluator.history) == 0
+    
+    def test_reset_session_clears_quality_evaluator_history(self):
+        """Test that resetting a session clears quality evaluator history"""
+        manager = SessionManager()
+        
+        session_id = manager.create_session("squat")
+        session_data = manager.get_session(session_id)
+        
+        # Simulate some quality scores
+        session_data.quality_evaluator.update_history(85.0)
+        session_data.quality_evaluator.update_history(90.0)
+        session_data.quality_evaluator.update_history(88.0)
+        
+        assert len(session_data.quality_evaluator.history) == 3
+        assert session_data.quality_evaluator.get_historical_average() is not None
+        
+        # Reset the session
+        result = manager.reset_session(session_id)
+        
+        assert result is True
+        assert len(session_data.quality_evaluator.history) == 0
+        assert session_data.quality_evaluator.get_historical_average() is None
