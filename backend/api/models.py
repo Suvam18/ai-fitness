@@ -185,6 +185,26 @@ class AnalysisResponse(BaseModel):
     errors: List[str] = Field(default_factory=list, description="Form error messages")
     calories: float = Field(..., description="Calories burned in this session")
     duration: Optional[float] = Field(default=None, description="Duration in seconds (for time-based exercises like plank)")
+    
+    # Real-time quality feedback fields
+    quality_score: float = Field(
+        ...,
+        description="Pose quality score (0-100)",
+        ge=0.0,
+        le=100.0
+    )
+    quality_category: str = Field(
+        ...,
+        description="Feedback category: 'poor', 'average', or 'excellent'"
+    )
+    real_time_feedback: str = Field(
+        ...,
+        description="Trainer-like feedback message"
+    )
+    historical_average: Optional[float] = Field(
+        default=None,
+        description="Average quality score for this session"
+    )
 
 
 # Session Management Models
