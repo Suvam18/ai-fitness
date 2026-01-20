@@ -5,6 +5,137 @@ Refactored from app.py - removed print statements and console output
 import numpy as np
 import time
 from typing import Dict, List, Tuple, Optional
+from enum import Enum
+
+
+class RepState(Enum):
+    """States for the repetition state machine."""
+    START = "start"
+    IN_PROGRESS = "in_progress"
+    PEAK_REACHED = "peak_reached"
+    COMPLETED = "completed"
+
+
+class RepCounter:
+    """
+    Robust repetition counter using Finite State Machine.
+    Prevents double-counting and phantom reps by requiring full movement cycles.
+    """
+    
+    def __init__(self, bottom_threshold: float = 80.0, peak_threshold: float = 160.0, 
+                 hysteresis: float = 5.0):
+        """
+        Initialize the rep counter.
+        
+        Args:
+            bottom_threshold: Angle threshold for bottom position (degrees)
+            peak_threshold: Angle threshold for peak position (degrees)
+            hysteresis: Hysteresis buffer to prevent jittery transitions
+        """
+        self.bottom_threshold = bottom_threshold
+        self.peak_threshold = peak_threshold
+        self.hysteresis = hysteresis
+        
+        self.state = RepState.START
+        self.rep_count = 0
+        self.rep_history = []
+        self.last_angle = None
+        self.angle_history = []  # Track recent angles for smoothing
+        self.rep_start_time = None
+        
+    def _is_at_bottom(self, angle: float) -> bool:
+        """Check if angle indicates bottom position with hysteresis."""
+        if self.state == RepState.START:
+            return angle <= self.bottom_threshold
+        elif self.state == RepState.PEAK_REACHED:
+            return angle <= self.bottom_threshold + self.hysteresis
+        return False
+        
+    def _is_at_peak(self, angle: float) -> bool:
+        """Check if angle indicates peak position with hysteresis."""
+        if self.state == RepState.IN_PROGRESS:
+            return angle >= self.peak_threshold
+        return False
+        
+    def _is_moving_up(self, angle: float) -> bool:
+        """Check if movement is upward (angle increasing)."""
+        if self.last_angle is None:
+            return False
+        return angle > self.last_angle + 2.0  # Minimum movement threshold
+        
+    def _is_moving_down(self, angle: float) -> bool:
+        """Check if movement is downward (angle decreasing)."""
+        if self.last_angle is None:
+            return False
+        return angle < self.last_angle - 2.0  # Minimum movement threshold
+        
+    def update(self, angle: float, timestamp: float = None) -> Dict:
+        """
+        Update the state machine with new angle measurement.
+        
+        Args:
+            angle: Current joint angle in degrees
+            timestamp: Current timestamp (uses time.time() if None)
+            
+        Returns:
+            Dictionary with rep count and state information
+        """
+        if timestamp is None:
+            timestamp = time.time()
+            
+        # Store angle history for potential future smoothing
+        self.angle_history.append(angle)
+        if len(self.angle_history) > 5:
+            self.angle_history.pop(0)
+            
+        # Use raw angle for now - smoothing can be added with more sophisticated logic
+        smoothed_angle = angle
+        
+        rep_completed = False
+        feedback = []
+        
+        # State machine transitions
+        if self.state == RepState.START:
+            # Wait for movement to begin (angle decreases to bottom)
+            if self._is_at_bottom(smoothed_angle):
+                self.state = RepState.IN_PROGRESS
+                self.rep_start_time = timestamp
+                feedback.append("Movement started")
+                
+        elif self.state == RepState.IN_PROGRESS:
+            # Moving up towards peak
+            if self._is_at_peak(smoothed_angle):
+                self.state = RepState.PEAK_REACHED
+                self.rep_count += 1
+                rep_duration = timestamp - self.rep_start_time if self.rep_start_time else 0
+                self.rep_history.append(rep_duration)
+                feedback.append(f"Rep {self.rep_count} completed! ({rep_duration:.1f}s)")
+                rep_completed = True
+                
+        elif self.state == RepState.PEAK_REACHED:
+            # At peak, wait for movement back down
+            if self._is_at_bottom(smoothed_angle):
+                self.state = RepState.IN_PROGRESS
+                self.rep_start_time = timestamp
+                
+        self.last_angle = smoothed_angle
+        
+        return {
+            'rep_count': self.rep_count,
+            'state': self.state.value,
+            'rep_completed': rep_completed,
+            'feedback': feedback,
+            'smoothed_angle': smoothed_angle
+        }
+        
+    def reset(self):
+        """Reset the counter to initial state."""
+        self.state = RepState.START
+        self.rep_count = 0
+        self.rep_history = []
+        self.last_angle = None
+        self.angle_history = []
+        self.rep_start_time = None
 
 
 class EnhancedExerciseAnalyzer:
@@ -23,11 +154,43 @@ class EnhancedExerciseAnalyzer:
         self.exercise_type = exercise_type
         self.rep_count = 0
         self.set_count = 1
-        self.current_stage = "start"
         self.start_time = time.time()
         self.rep_history = []
         self.calories_burned = 0.0
-        self.rep_start_time = None
+        
+        # Initialize rep counters for different exercises with appropriate thresholds
+        self.rep_counters = {
+            "bicep_curl": RepCounter(bottom_threshold=80.0, peak_threshold=160.0),
+            "squat": RepCounter(bottom_threshold=90.0, peak_threshold=170.0),
+            "shoulder_press": RepCounter(bottom_threshold=90.0, peak_threshold=160.0),
+            "push_up": RepCounter(bottom_threshold=70.0, peak_threshold=160.0),  # Elbow angle
+        }
+        
+        # Get the appropriate rep counter for current exercise
+        self.rep_counter = self.rep_counters.get(exercise_type, RepCounter())
+
+    @property
+    def current_stage(self):
+        """Get the current stage for backward compatibility."""
+        state_mapping = {
+            RepState.START: "start",
+            RepState.IN_PROGRESS: "up", 
+            RepState.PEAK_REACHED: "down",
+            RepState.COMPLETED: "start"  # Should not happen with new logic
+        }
+        return state_mapping.get(self.rep_counter.state, "start")
+        
+    @current_stage.setter 
+    def current_stage(self, value):
+        """Set the current stage for backward compatibility."""
+        # Map old stage names to new enum values
+        stage_mapping = {
+            "start": RepState.START,
+            "up": RepState.IN_PROGRESS,
+            "down": RepState.PEAK_REACHED,
+        }
+        if value in stage_mapping:
+            self.rep_counter.state = stage_mapping[value]
 
     def calculate_angle(self, a: Tuple[float, ...], b: Tuple[float, ...], c: Tuple[float, ...]) -> float:
         """
@@ -93,33 +256,26 @@ class EnhancedExerciseAnalyzer:
         
         elbow_angle = self.calculate_angle(shoulder, elbow, wrist)
         
-        # Rep counting with time tracking
-        current_time = time.time()
+        # Use robust state machine for rep counting
+        rep_result = self.rep_counter.update(elbow_angle)
+        self.rep_count = rep_result['rep_count']
         
-        if self.current_stage == "start" and elbow_angle < 80:
-            self.current_stage = "up"
-            self.rep_start_time = current_time
-        elif self.current_stage == "up" and elbow_angle > 160:
-            self.current_stage = "down"
-            self.rep_count += 1
-            rep_duration = current_time - self.rep_start_time if self.rep_start_time else 0
-            self.rep_history.append(rep_duration)
+        # Add rep counter feedback
+        feedback.extend(rep_result['feedback'])
+        
+        # Update calories
+        if rep_result['rep_completed']:
             self.calories_burned += 0.5  # Approximate calories per rep
             
-            feedback.append(f"Rep {self.rep_count} completed! ({rep_duration:.1f}s)")
-            
             # Check for consistent tempo
-            if len(self.rep_history) > 1:
-                avg_duration = np.mean(self.rep_history)
-                if rep_duration > avg_duration * 1.5:
+            if len(self.rep_counter.rep_history) > 1:
+                avg_duration = np.mean(self.rep_counter.rep_history)
+                last_duration = self.rep_counter.rep_history[-1]
+                if last_duration > avg_duration * 1.5:
                     warnings.append("Slow down - maintain consistent tempo")
-                elif rep_duration < avg_duration * 0.5:
+                elif last_duration < avg_duration * 0.5:
                     warnings.append("Speed up - don't rush the movement")
                     
-        elif self.current_stage == "down" and elbow_angle < 80:
-            self.current_stage = "up"
-            self.rep_start_time = current_time
-            
         # Form checks
         elbow_shoulder_distance = abs(elbow[0] - shoulder[0])
         if elbow_shoulder_distance > 0.12:
@@ -127,7 +283,7 @@ class EnhancedExerciseAnalyzer:
         elif elbow_shoulder_distance > 0.08:
             warnings.append("Elbows starting to drift out")
             
-        if elbow_angle > 170 and self.current_stage != "start":
+        if elbow_angle > 170 and rep_result['state'] != "start":
             warnings.append("Fully extend arms for maximum range")
             
         return {
@@ -163,16 +319,16 @@ class EnhancedExerciseAnalyzer:
         knee_angle = self.calculate_angle(hip, knee, ankle)
         hip_angle = self.calculate_angle(shoulder, hip, knee)
         
-        # Squat rep counting
-        if self.current_stage == "start" and knee_angle < 150:
-            self.current_stage = "down"
-        elif self.current_stage == "down" and knee_angle > 160:
-            self.current_stage = "up"
-            self.rep_count += 1
+        # Use robust state machine for rep counting
+        rep_result = self.rep_counter.update(knee_angle)
+        self.rep_count = rep_result['rep_count']
+        
+        # Add rep counter feedback
+        feedback.extend(rep_result['feedback'])
+        
+        # Update calories
+        if rep_result['rep_completed']:
             self.calories_burned += 1.0  # More calories for squats
-            feedback.append(f"Squat {self.rep_count} completed!")
-        elif self.current_stage == "up" and knee_angle < 150:
-            self.current_stage = "down"
             
         # Depth analysis
         if knee_angle < 90:
@@ -220,15 +376,16 @@ class EnhancedExerciseAnalyzer:
         
         elbow_angle = self.calculate_angle(shoulder, elbow, wrist)
         
-        if self.current_stage == "start" and elbow_angle < 100:
-            self.current_stage = "up"
-        elif self.current_stage == "up" and elbow_angle > 160:
-            self.current_stage = "down"
-            self.rep_count += 1
+        # Use robust state machine for rep counting
+        rep_result = self.rep_counter.update(elbow_angle)
+        self.rep_count = rep_result['rep_count']
+        
+        # Add rep counter feedback
+        feedback.extend(rep_result['feedback'])
+        
+        # Update calories
+        if rep_result['rep_completed']:
             self.calories_burned += 0.6
-            feedback.append(f"Shoulder Press {self.rep_count} completed!")
-        elif self.current_stage == "down" and elbow_angle < 100:
-            self.current_stage = "up"
             
         # Form checks
         if elbow_angle < 90:
@@ -342,7 +499,9 @@ class EnhancedExerciseAnalyzer:
     def reset(self):
         """Reset the analyzer state to initial values."""
         self.rep_count = 0
-        self.current_stage = "start"
         self.calories_burned = 0.0
         self.rep_history = []
-        self.rep_start_time = None
+        
+        # Reset the rep counter
+        if hasattr(self, 'rep_counter'):
+            self.rep_counter.reset()
