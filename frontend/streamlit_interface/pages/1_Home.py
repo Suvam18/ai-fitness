@@ -17,6 +17,7 @@ from styles.custom_css import inject_custom_css, apply_page_config
 from utils.icons import inject_material_icons_cdn, get_icon_name
 from utils.state_manager import StateManager
 from components.navigation import Navigation
+from components.hero_carousel import render_hero_carousel
 
 
 def inject_dark_mode_support():
@@ -134,29 +135,10 @@ def main():
     # Render navigation
     Navigation.render_sidebar_nav()
 
-    # Compact header
-    st.markdown(
-        """
-        <div style='display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem;'>
-            <span class="material-icons" style='font-size: 2rem; color: #2563eb;'>home</span>
-            <h1 style='font-size: 1.75rem; font-weight: 700; margin: 0; color: var(--text-color);'>Home</h1>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
-    # Welcome section
-    st.markdown(
-        """
-        <div style='display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;'>
-            <span class="material-icons" style='color: #2563eb;'>waving_hand</span>
-            <h2 style='margin: 0; color: var(--text-color);'>Welcome to AI Fitness Trainer</h2>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    
-    st.info("Your personal AI-powered workout assistant for real-time form analysis and feedback")
+
+    # Hero Carousel Section
+    render_hero_carousel()
 
     # Features section
     st.markdown(
