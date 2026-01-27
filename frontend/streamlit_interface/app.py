@@ -450,38 +450,10 @@ def main():
     # Check backend health
     check_backend_health()
     
+
     # Render welcome page
     render_welcome_page()
-    
-    # Add sidebar instructions
-    with st.sidebar:
-        st.markdown(
-            """
-            <div style='display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;'>
-                <span class="material-icons" style='color: #2563eb;'>navigation</span>
-                <h3 style='margin: 0; color: var(--text-color);'>Navigation</h3>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        st.info("Select a page from the menu above to get started with your fitness journey.")
-        
-        st.markdown("---")
-        st.markdown(
-            """
-            <div style='display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;'>
-                <span class="material-icons" style='color: #10b981;'>lightbulb</span>
-                <h3 style='margin: 0; color: var(--text-color);'>Quick Tips</h3>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        st.markdown("""
-        - Start with the **Home** page for an overview
-        - Go to **Workout** to begin training
-        - Check **History** to review past sessions
-        - View **Stats** for performance insights
-        """)
+
 
 
 if __name__ == "__main__":

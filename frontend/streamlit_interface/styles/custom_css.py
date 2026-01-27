@@ -45,6 +45,9 @@ def get_custom_css() -> str:
         background-color: {COLORS['background']} !important;
     }}
     
+    /* Keep sidebar available but collapsed by default */
+    /* The sidebar will be accessible via hamburger menu */
+    
     /* Hide Streamlit Branding */
     #MainMenu {{visibility: hidden;}}
     footer {{visibility: hidden;}}
