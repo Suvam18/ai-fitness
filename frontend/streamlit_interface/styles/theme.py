@@ -7,20 +7,24 @@ constants used throughout the application to ensure visual consistency.
 
 # Color Scheme - Professional and Modern
 COLORS = {
-    # Primary colors
+    # Primary colors - Neon Blue
     "primary": "#2563eb",  # Blue - main brand color
-    "primary_dark": "#1e40af",  # Darker blue for hover states
+    "primary_dark": "#1d4ed8",  # Darker blue for hover states
     "primary_light": "#3b82f6",  # Lighter blue for accents
+    "primary_glow": "0 0 20px rgba(37, 99, 235, 0.5)",
     
-    # Secondary colors
+    # Secondary colors - Neon Green
     "secondary": "#10b981",  # Green - success/positive feedback
     "secondary_dark": "#059669",
     "secondary_light": "#34d399",
+    "secondary_glow": "0 0 20px rgba(16, 185, 129, 0.5)",
     
-    # Accent colors
+    # Accent colors - Neon Purple/Orange
     "accent": "#8b5cf6",  # Purple - highlights
     "accent_dark": "#7c3aed",
     "accent_light": "#a78bfa",
+    "accent_orange": "#f97316",
+    "accent_glow": "0 0 20px rgba(139, 92, 246, 0.5)",
     
     # Semantic colors
     "success": "#10b981",  # Green
@@ -28,25 +32,27 @@ COLORS = {
     "error": "#ef4444",  # Red
     "info": "#3b82f6",  # Blue
     
-    # Neutral colors
-    "background": "#ffffff",  # White background
-    "background_secondary": "#f9fafb",  # Light gray background
-    "background_tertiary": "#f3f4f6",  # Slightly darker gray
+    # Neutral colors - Dark Theme
+    "background": "#0f172a",  # Deep Navy/Black
+    "background_gradient": "linear-gradient(135deg, #020617 0%, #0f172a 100%)",
+    "background_secondary": "rgba(30, 41, 59, 0.5)",  # Semi-transparent dark
+    "background_tertiary": "rgba(51, 65, 85, 0.5)",  # Lighter semi-transparent
     
-    # Text colors
-    "text_primary": "#111827",  # Almost black
-    "text_secondary": "#6b7280",  # Medium gray
-    "text_tertiary": "#9ca3af",  # Light gray
-    "text_inverse": "#ffffff",  # White text
+    # Text colors - High Contrast
+    "text_primary": "#f8fafc",  # Off-white
+    "text_secondary": "#cbd5e1",  # Light gray
+    "text_tertiary": "#94a3b8",  # Medium gray
+    "text_inverse": "#020617",  # Dark text for light backgrounds
     
     # Border colors
-    "border": "#e5e7eb",  # Light gray border
-    "border_dark": "#d1d5db",  # Darker border
+    "border": "rgba(148, 163, 184, 0.1)",  # Subtle border
+    "border_dark": "rgba(148, 163, 184, 0.2)",  # Stronger border
+    "border_glow": "rgba(59, 130, 246, 0.5)",
     
     # Card and surface colors
-    "card_background": "#ffffff",
-    "card_hover": "#f9fafb",
-    "surface": "#ffffff",
+    "card_background": "rgba(30, 41, 59, 0.4)",  # Glassmorphism base
+    "card_hover": "rgba(51, 65, 85, 0.6)",
+    "surface": "#1e293b",
 }
 
 # Typography - Using Inter as primary font with fallbacks
@@ -101,22 +107,23 @@ SPACING = {
 # Border Radius - Rounded corners
 BORDER_RADIUS = {
     "none": "0",
-    "sm": "0.25rem",   # 4px
-    "md": "0.5rem",    # 8px
-    "lg": "0.75rem",   # 12px
-    "xl": "1rem",      # 16px
-    "2xl": "1.5rem",   # 24px
-    "full": "9999px",  # Fully rounded
+    "sm": "0.375rem",   # 6px
+    "md": "0.75rem",    # 12px
+    "lg": "1rem",       # 16px
+    "xl": "1.5rem",     # 24px
+    "2xl": "2rem",      # 32px
+    "full": "9999px",   # Fully rounded
 }
 
 # Shadows - Elevation system
 SHADOWS = {
     "none": "none",
-    "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-    "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-    "2xl": "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+    "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.3)",
+    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)",
+    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)",
+    "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)",
+    "2xl": "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+    "glow": "0 0 15px rgba(37, 99, 235, 0.3)",
 }
 
 # Transitions - Smooth animations

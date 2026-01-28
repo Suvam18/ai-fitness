@@ -34,19 +34,19 @@ def get_custom_css() -> str:
         color: {COLORS['text_primary']};
     }}
     
-    /* Main Container */
+    /* Main Container with Gradient Background */
     .main {{
-        background-color: {COLORS['background']};
+        background: {COLORS['background']};
+        background-image: {COLORS['background_gradient']};
+        background-attachment: fixed;
         padding: {SPACING['lg']};
+        min-height: 100vh;
     }}
     
-    /* Streamlit Header */
+    /* Streamlit Header - Transparent */
     header {{
-        background-color: {COLORS['background']} !important;
+        background-color: transparent !important;
     }}
-    
-    /* Keep sidebar available but collapsed by default */
-    /* The sidebar will be accessible via hamburger menu */
     
     /* Hide Streamlit Branding */
     #MainMenu {{visibility: hidden;}}
@@ -54,11 +54,11 @@ def get_custom_css() -> str:
     
     /* Typography Styles */
     h1 {{
-        font-size: clamp({TYPOGRAPHY['font_size_2xl']}, 4vw, {TYPOGRAPHY['font_size_4xl']});
+        font-size: clamp({TYPOGRAPHY['font_size_3xl']}, 5vw, {TYPOGRAPHY['font_size_5xl']});
         font-weight: {TYPOGRAPHY['font_weight_bold']};
         color: {COLORS['text_primary']};
-        line-height: {TYPOGRAPHY['line_height_tight']};
-        margin-bottom: {SPACING['lg']};
+        text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        margin-bottom: {SPACING['xl']};
         letter-spacing: {TYPOGRAPHY['letter_spacing_tight']};
     }}
     
@@ -66,23 +66,14 @@ def get_custom_css() -> str:
         font-size: clamp({TYPOGRAPHY['font_size_xl']}, 3vw, {TYPOGRAPHY['font_size_3xl']});
         font-weight: {TYPOGRAPHY['font_weight_semibold']};
         color: {COLORS['text_primary']};
-        line-height: {TYPOGRAPHY['line_height_tight']};
-        margin-bottom: {SPACING['md']};
+        margin-bottom: {SPACING['lg']};
     }}
     
     h3 {{
         font-size: clamp({TYPOGRAPHY['font_size_lg']}, 2.5vw, {TYPOGRAPHY['font_size_2xl']});
         font-weight: {TYPOGRAPHY['font_weight_semibold']};
         color: {COLORS['text_primary']};
-        line-height: {TYPOGRAPHY['line_height_normal']};
         margin-bottom: {SPACING['md']};
-    }}
-    
-    h4 {{
-        font-size: clamp({TYPOGRAPHY['font_size_base']}, 2vw, {TYPOGRAPHY['font_size_xl']});
-        font-weight: {TYPOGRAPHY['font_weight_medium']};
-        color: {COLORS['text_primary']};
-        margin-bottom: {SPACING['sm']};
     }}
     
     p {{
@@ -93,591 +84,121 @@ def get_custom_css() -> str:
         margin-bottom: {SPACING['md']};
     }}
     
-    /* Button Styles */
+    /* Button Styles - Neon Glow */
     .stButton > button {{
-        background-color: {COLORS['primary']};
+        background: linear-gradient(135deg, #c2410c, #dc2626);
         color: {COLORS['text_inverse']};
         border: none;
-        border-radius: {BORDER_RADIUS['md']};
-        padding: {SPACING['sm']} {SPACING['lg']};
+        border-radius: {BORDER_RADIUS['full']};
+        padding: {SPACING['md']} {SPACING['xl']};
         font-size: {TYPOGRAPHY['font_size_base']};
-        font-weight: {TYPOGRAPHY['font_weight_medium']};
-        font-family: {TYPOGRAPHY['font_family_primary']};
+        font-weight: {TYPOGRAPHY['font_weight_semibold']};
         cursor: pointer;
         transition: all {TRANSITIONS['normal']};
-        box-shadow: {SHADOWS['sm']};
+        box-shadow: 0 0 15px rgba(194, 65, 12, 0.3);
+        text-transform: uppercase;
+        letter-spacing: {TYPOGRAPHY['letter_spacing_wide']};
         width: 100%;
+        position: relative;
+        overflow: hidden;
     }}
     
     .stButton > button:hover {{
-        background-color: {COLORS['primary_dark']};
-        box-shadow: {SHADOWS['md']};
-        transform: translateY(-1px);
-    }}
-    
-    .stButton > button:active {{
-        transform: translateY(0);
-        box-shadow: {SHADOWS['sm']};
-    }}
-    
-    .stButton > button:focus {{
-        outline: 2px solid {COLORS['primary_light']};
-        outline-offset: 2px;
-    }}
-    
-    /* Secondary Button */
-    .stButton.secondary > button {{
-        background-color: {COLORS['background_secondary']};
-        color: {COLORS['text_primary']};
-        border: 1px solid {COLORS['border']};
-    }}
-    
-    .stButton.secondary > button:hover {{
-        background-color: {COLORS['background_tertiary']};
-        border-color: {COLORS['border_dark']};
-    }}
-    
-    /* Card Styles */
-    .card {{
-        background-color: {COLORS['card_background']};
-        border-radius: {BORDER_RADIUS['lg']};
-        padding: {SPACING['lg']};
-        box-shadow: {SHADOWS['md']};
-        transition: all {TRANSITIONS['normal']};
-        border: 1px solid {COLORS['border']};
-        margin-bottom: {SPACING['md']};
-    }}
-    
-    .card:hover {{
-        box-shadow: {SHADOWS['lg']};
         transform: translateY(-2px);
-        border-color: {COLORS['primary_light']};
+        box-shadow: 0 0 25px rgba(194, 65, 12, 0.5);
+        filter: brightness(1.15);
     }}
     
-    .card-clickable {{
-        cursor: pointer;
+    /* Glassmorphism Card Styles */
+    .glass-card {{
+        background: {COLORS['card_background']};
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid {COLORS['border']};
+        border-radius: {BORDER_RADIUS['2xl']};
+        padding: {SPACING['xl']};
+        box-shadow: {SHADOWS['lg']};
+        transition: all {TRANSITIONS['normal']};
     }}
     
-    .card-clickable:active {{
-        transform: translateY(0);
+    .glass-card:hover {{
+        background: {COLORS['card_hover']};
+        border-color: {COLORS['border_glow']};
+        box-shadow: {COLORS['primary_glow']}, {SHADOWS['xl']};
+        transform: translateY(-5px);
     }}
     
     /* Metric Card Styles */
     [data-testid="stMetricValue"] {{
-        font-size: {TYPOGRAPHY['font_size_3xl']};
-        font-weight: {TYPOGRAPHY['font_weight_bold']};
-        color: {COLORS['primary']};
+        color: {COLORS['primary_light']};
+        text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
     }}
     
     [data-testid="stMetricLabel"] {{
-        font-size: {TYPOGRAPHY['font_size_sm']};
-        font-weight: {TYPOGRAPHY['font_weight_medium']};
-        color: {COLORS['text_secondary']};
-        text-transform: uppercase;
-        letter-spacing: {TYPOGRAPHY['letter_spacing_wide']};
-    }}
-    
-    [data-testid="stMetricDelta"] {{
-        font-size: {TYPOGRAPHY['font_size_sm']};
-    }}
-    
-    /* Input Styles */
-    .stTextInput > div > div > input,
-    .stSelectbox > div > div > select {{
-        border-radius: {BORDER_RADIUS['md']};
-        border: 1px solid {COLORS['border']};
-        padding: {SPACING['sm']} {SPACING['md']};
-        font-family: {TYPOGRAPHY['font_family_primary']};
-        font-size: {TYPOGRAPHY['font_size_base']};
-        transition: all {TRANSITIONS['fast']};
-    }}
-    
-    .stTextInput > div > div > input:focus,
-    .stSelectbox > div > div > select:focus {{
-        border-color: {COLORS['primary']};
-        outline: none;
-        box-shadow: 0 0 0 3px {COLORS['primary_light']}33;
-    }}
-    
-    /* Selectbox Styles */
-    .stSelectbox > div > div {{
-        border-radius: {BORDER_RADIUS['md']};
+        color: {COLORS['text_tertiary']};
     }}
     
     /* Sidebar Styles */
     [data-testid="stSidebar"] {{
-        background-color: {COLORS['background_secondary']};
-        padding: {SPACING['lg']} {SPACING['md']};
+        background-color: {COLORS['background']} !important;
+        border-right: 1px solid {COLORS['border']};
     }}
     
-    [data-testid="stSidebar"] .stButton > button {{
-        background-color: transparent;
-        color: {COLORS['text_primary']};
-        border: none;
-        box-shadow: none;
-        text-align: left;
-        padding: {SPACING['md']};
-        border-radius: {BORDER_RADIUS['md']};
-        margin-bottom: {SPACING['xs']};
+    /* Animations */
+    @keyframes fadeIn {{
+        from {{ opacity: 0; }}
+        to {{ opacity: 1; }}
     }}
     
-    [data-testid="stSidebar"] .stButton > button:hover {{
-        background-color: {COLORS['card_hover']};
-        transform: none;
+    @keyframes slideUp {{
+        from {{ opacity: 0; transform: translateY(20px); }}
+        to {{ opacity: 1; transform: translateY(0); }}
     }}
     
-    [data-testid="stSidebar"] .stButton.active > button {{
-        background-color: {COLORS['primary']};
-        color: {COLORS['text_inverse']};
-        font-weight: {TYPOGRAPHY['font_weight_semibold']};
+    .animate-fade-in {{
+        animation: fadeIn 0.8s ease-out forwards;
     }}
     
-    /* Tabs Styles */
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: {SPACING['sm']};
-        border-bottom: 2px solid {COLORS['border']};
+    .animate-slide-up {{
+        animation: slideUp 0.6s ease-out forwards;
     }}
     
-    .stTabs [data-baseweb="tab"] {{
-        padding: {SPACING['sm']} {SPACING['lg']};
-        font-weight: {TYPOGRAPHY['font_weight_medium']};
-        color: {COLORS['text_secondary']};
-        border-radius: {BORDER_RADIUS['md']} {BORDER_RADIUS['md']} 0 0;
-        transition: all {TRANSITIONS['fast']};
+    /* Material Icon Styles */
+    .material-icons {{
+        font-family: 'Material Icons';
+        font-weight: normal;
+        font-style: normal;
+        display: inline-block;
+        line-height: 1;
+        text-transform: none;
+        letter-spacing: normal;
+        word-wrap: normal;
+        white-space: nowrap;
+        direction: ltr;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
     }}
     
-    .stTabs [data-baseweb="tab"]:hover {{
-        background-color: {COLORS['background_secondary']};
-        color: {COLORS['text_primary']};
+    .icon-glow-primary {{
+        text-shadow: {COLORS['primary_glow']};
     }}
     
-    .stTabs [aria-selected="true"] {{
-        background-color: {COLORS['primary']};
-        color: {COLORS['text_inverse']} !important;
+    .icon-glow-secondary {{
+        text-shadow: {COLORS['secondary_glow']};
     }}
     
-    /* Expander Styles */
-    .streamlit-expanderHeader {{
-        background-color: {COLORS['background_secondary']};
-        border-radius: {BORDER_RADIUS['md']};
-        padding: {SPACING['md']};
-        font-weight: {TYPOGRAPHY['font_weight_medium']};
-        transition: all {TRANSITIONS['fast']};
+    .icon-glow-accent {{
+        text-shadow: {COLORS['accent_glow']};
     }}
     
-    .streamlit-expanderHeader:hover {{
-        background-color: {COLORS['background_tertiary']};
-    }}
-    
-    /* Alert/Info Box Styles */
-    .stAlert {{
-        border-radius: {BORDER_RADIUS['md']};
-        padding: {SPACING['md']};
-        border-left: 4px solid;
-    }}
-    
-    .stAlert[data-baseweb="notification"] {{
-        background-color: {COLORS['background_secondary']};
-    }}
-    
-    /* Success Alert */
-    .stSuccess {{
-        border-left-color: {COLORS['success']};
-        background-color: {COLORS['success']}15;
-    }}
-    
-    /* Warning Alert */
-    .stWarning {{
-        border-left-color: {COLORS['warning']};
-        background-color: {COLORS['warning']}15;
-    }}
-    
-    /* Error Alert */
-    .stError {{
-        border-left-color: {COLORS['error']};
-        background-color: {COLORS['error']}15;
-    }}
-    
-    /* Info Alert */
-    .stInfo {{
-        border-left-color: {COLORS['info']};
-        background-color: {COLORS['info']}15;
-    }}
-    
-    /* Dataframe Styles */
-    .stDataFrame {{
-        border-radius: {BORDER_RADIUS['md']};
-        overflow: hidden;
-    }}
-    
-    /* Progress Bar */
-    .stProgress > div > div > div {{
-        background-color: {COLORS['primary']};
-        border-radius: {BORDER_RADIUS['full']};
-    }}
-    
-    /* Spinner */
-    .stSpinner > div {{
-        border-top-color: {COLORS['primary']};
-    }}
-    
-    /* Divider */
-    hr {{
-        border: none;
-        border-top: 1px solid {COLORS['border']};
-        margin: {SPACING['lg']} 0;
-    }}
-    
-    /* Link Styles */
-    a {{
-        color: {COLORS['primary']};
-        text-decoration: none;
-        transition: color {TRANSITIONS['fast']};
-    }}
-    
-    a:hover {{
-        color: {COLORS['primary_dark']};
-        text-decoration: underline;
-    }}
-    
-    /* Code Block Styles */
-    code {{
-        background-color: {COLORS['background_secondary']};
-        padding: {SPACING['xs']} {SPACING['sm']};
-        border-radius: {BORDER_RADIUS['sm']};
-        font-family: {TYPOGRAPHY['font_family_mono']};
-        font-size: {TYPOGRAPHY['font_size_sm']};
-        color: {COLORS['accent']};
-    }}
-    
-    pre {{
-        background-color: {COLORS['background_secondary']};
-        padding: {SPACING['md']};
-        border-radius: {BORDER_RADIUS['md']};
-        overflow-x: auto;
-    }}
-    
-    /* Responsive Design - Enhanced */
-    
-    /* Prevent horizontal scrolling */
-    html, body {{
-        overflow-x: hidden;
-        max-width: 100vw;
-    }}
-    
-    .main {{
-        max-width: 100%;
-        overflow-x: hidden;
-    }}
-    
-    /* Responsive containers */
-    [data-testid="stHorizontalBlock"] {{
-        flex-wrap: wrap;
-        gap: {SPACING['md']};
-    }}
-    
-    /* Responsive columns */
-    [data-testid="column"] {{
-        min-width: 0;
-        flex-shrink: 1;
-    }}
-    
-    /* Tablet breakpoint (768px and below) */
+    /* Responsive Adjustments */
     @media (max-width: {BREAKPOINTS['tablet']}) {{
         .main {{
             padding: {SPACING['md']};
         }}
-        
-        /* Adjust card padding */
-        .card {{
-            padding: {SPACING['md']};
-            margin-bottom: {SPACING['sm']};
+        .glass-card {{
+            padding: {SPACING['lg']};
         }}
-        
-        /* Adjust metric sizes */
-        [data-testid="stMetricValue"] {{
-            font-size: clamp({TYPOGRAPHY['font_size_xl']}, 3vw, {TYPOGRAPHY['font_size_2xl']});
-        }}
-        
-        [data-testid="stMetricLabel"] {{
-            font-size: {TYPOGRAPHY['font_size_xs']};
-        }}
-        
-        /* Stack columns on tablet */
-        [data-testid="column"] {{
-            width: 100% !important;
-            flex: 1 1 100% !important;
-        }}
-        
-        /* Adjust button sizes */
-        .stButton > button {{
-            padding: {SPACING['sm']} {SPACING['md']};
-            font-size: {TYPOGRAPHY['font_size_sm']};
-        }}
-        
-        /* Sidebar adjustments */
-        [data-testid="stSidebar"] {{
-            padding: {SPACING['md']} {SPACING['sm']};
-        }}
-        
-        /* Reduce spacing */
-        .mt-lg {{ margin-top: {SPACING['md']}; }}
-        .mb-lg {{ margin-bottom: {SPACING['md']}; }}
-        .p-lg {{ padding: {SPACING['md']}; }}
-    }}
-    
-    /* Mobile breakpoint (640px and below) */
-    @media (max-width: {BREAKPOINTS['mobile']}) {{
-        .main {{
-            padding: {SPACING['sm']};
-        }}
-        
-        /* Further reduce card padding */
-        .card {{
-            padding: {SPACING['sm']};
-            margin-bottom: {SPACING['xs']};
-        }}
-        
-        /* Smaller buttons */
-        .stButton > button {{
-            padding: {SPACING['xs']} {SPACING['sm']};
-            font-size: {TYPOGRAPHY['font_size_sm']};
-        }}
-        
-        /* Compact metrics */
-        [data-testid="stMetricValue"] {{
-            font-size: clamp({TYPOGRAPHY['font_size_lg']}, 4vw, {TYPOGRAPHY['font_size_xl']});
-        }}
-        
-        [data-testid="stMetricLabel"] {{
-            font-size: {TYPOGRAPHY['font_size_xs']};
-        }}
-        
-        /* Compact sidebar */
-        [data-testid="stSidebar"] {{
-            padding: {SPACING['sm']} {SPACING['xs']};
-        }}
-        
-        [data-testid="stSidebar"] .stButton > button {{
-            padding: {SPACING['xs']} {SPACING['sm']};
-            font-size: {TYPOGRAPHY['font_size_sm']};
-        }}
-        
-        /* Reduce icon sizes */
-        .icon {{
-            width: 1.25rem;
-            height: 1.25rem;
-        }}
-        
-        .icon-lg {{
-            width: 2rem;
-            height: 2rem;
-        }}
-        
-        .icon-xl {{
-            width: 3rem;
-            height: 3rem;
-        }}
-        
-        /* Compact spacing */
-        .mt-md {{ margin-top: {SPACING['sm']}; }}
-        .mt-lg {{ margin-top: {SPACING['md']}; }}
-        .mb-md {{ margin-bottom: {SPACING['sm']}; }}
-        .mb-lg {{ margin-bottom: {SPACING['md']}; }}
-        .p-md {{ padding: {SPACING['sm']}; }}
-        .p-lg {{ padding: {SPACING['md']}; }}
-        
-        /* Adjust input fields */
-        .stTextInput > div > div > input,
-        .stSelectbox > div > div > select {{
-            padding: {SPACING['xs']} {SPACING['sm']};
-            font-size: {TYPOGRAPHY['font_size_sm']};
-        }}
-        
-        /* Compact tabs */
-        .stTabs [data-baseweb="tab"] {{
-            padding: {SPACING['xs']} {SPACING['sm']};
-            font-size: {TYPOGRAPHY['font_size_sm']};
-        }}
-        
-        /* Compact expander */
-        .streamlit-expanderHeader {{
-            padding: {SPACING['sm']};
-            font-size: {TYPOGRAPHY['font_size_sm']};
-        }}
-        
-        /* Compact alerts */
-        .stAlert {{
-            padding: {SPACING['sm']};
-            font-size: {TYPOGRAPHY['font_size_sm']};
-        }}
-        
-        /* Compact empty state */
-        .empty-state {{
-            padding: {SPACING['xl']} {SPACING['sm']};
-        }}
-        
-        .empty-state-icon {{
-            font-size: {TYPOGRAPHY['font_size_3xl']};
-        }}
-        
-        .empty-state-title {{
-            font-size: {TYPOGRAPHY['font_size_lg']};
-        }}
-        
-        .empty-state-description {{
-            font-size: {TYPOGRAPHY['font_size_sm']};
-        }}
-    }}
-    
-    /* Large desktop breakpoint (1280px and above) */
-    @media (min-width: {BREAKPOINTS['wide']}) {{
-        .main {{
-            max-width: 1400px;
-            margin: 0 auto;
-        }}
-    }}
-    
-    /* Responsive images and media */
-    img, video {{
-        max-width: 100%;
-        height: auto;
-    }}
-    
-    /* Responsive tables */
-    .stDataFrame {{
-        overflow-x: auto;
-        max-width: 100%;
-    }}
-    
-    /* Responsive charts - ensure they fit container */
-    .js-plotly-plot {{
-        width: 100% !important;
-    }}
-    
-    .plotly {{
-        width: 100% !important;
-    }}
-    
-    /* Mobile navigation enhancements */
-    @media (max-width: {BREAKPOINTS['mobile']}) {{
-        /* Collapsible sidebar on mobile */
-        [data-testid="stSidebar"][aria-expanded="false"] {{
-            display: none;
-        }}
-        
-        /* Hamburger menu button styling */
-        [data-testid="collapsedControl"] {{
-            background-color: {COLORS['primary']};
-            color: {COLORS['text_inverse']};
-            border-radius: {BORDER_RADIUS['md']};
-            padding: {SPACING['sm']};
-        }}
-    }}
-    
-    /* Custom Utility Classes */
-    .text-center {{
-        text-align: center;
-    }}
-    
-    .text-right {{
-        text-align: right;
-    }}
-    
-    .mt-sm {{ margin-top: {SPACING['sm']}; }}
-    .mt-md {{ margin-top: {SPACING['md']}; }}
-    .mt-lg {{ margin-top: {SPACING['lg']}; }}
-    
-    .mb-sm {{ margin-bottom: {SPACING['sm']}; }}
-    .mb-md {{ margin-bottom: {SPACING['md']}; }}
-    .mb-lg {{ margin-bottom: {SPACING['lg']}; }}
-    
-    .p-sm {{ padding: {SPACING['sm']}; }}
-    .p-md {{ padding: {SPACING['md']}; }}
-    .p-lg {{ padding: {SPACING['lg']}; }}
-    
-    /* Icon Styles */
-    .icon {{
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1.5rem;
-        height: 1.5rem;
-        margin-right: {SPACING['sm']};
-    }}
-    
-    .icon-lg {{
-        width: 2.5rem;
-        height: 2.5rem;
-    }}
-    
-    .icon-xl {{
-        width: 4rem;
-        height: 4rem;
-    }}
-    
-    /* Empty State Styles */
-    .empty-state {{
-        text-align: center;
-        padding: {SPACING['4xl']} {SPACING['lg']};
-        color: {COLORS['text_tertiary']};
-    }}
-    
-    .empty-state-icon {{
-        font-size: {TYPOGRAPHY['font_size_5xl']};
-        margin-bottom: {SPACING['lg']};
-        opacity: 0.5;
-    }}
-    
-    .empty-state-title {{
-        font-size: {TYPOGRAPHY['font_size_xl']};
-        font-weight: {TYPOGRAPHY['font_weight_semibold']};
-        color: {COLORS['text_secondary']};
-        margin-bottom: {SPACING['sm']};
-    }}
-    
-    .empty-state-description {{
-        font-size: {TYPOGRAPHY['font_size_base']};
-        color: {COLORS['text_tertiary']};
-    }}
-    
-    /* Loading State */
-    .loading-container {{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: {SPACING['3xl']};
-    }}
-    
-    /* Badge Styles */
-    .badge {{
-        display: inline-block;
-        padding: {SPACING['xs']} {SPACING['sm']};
-        border-radius: {BORDER_RADIUS['full']};
-        font-size: {TYPOGRAPHY['font_size_xs']};
-        font-weight: {TYPOGRAPHY['font_weight_semibold']};
-        text-transform: uppercase;
-        letter-spacing: {TYPOGRAPHY['letter_spacing_wide']};
-    }}
-    
-    .badge-success {{
-        background-color: {COLORS['success']}20;
-        color: {COLORS['success']};
-    }}
-    
-    .badge-warning {{
-        background-color: {COLORS['warning']}20;
-        color: {COLORS['warning']};
-    }}
-    
-    .badge-error {{
-        background-color: {COLORS['error']}20;
-        color: {COLORS['error']};
-    }}
-    
-    .badge-info {{
-        background-color: {COLORS['info']}20;
-        color: {COLORS['info']};
     }}
     </style>
     """
