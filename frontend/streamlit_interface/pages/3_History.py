@@ -6,6 +6,7 @@ formatted data display, and summary statistics.
 """
 
 import streamlit as st
+import textwrap
 import sys
 from pathlib import Path
 
@@ -205,12 +206,18 @@ def render_session_card(session):
         session: Workout session dictionary
     """
     # Format session data
-    exercise_name = WorkoutHistoryFormatter.format_exercise_name(
-        session.get('exercise', 'Unknown')
-    )
+    raw_exercise_name = session.get('exercise', 'Unknown')
+    exercise_name = WorkoutHistoryFormatter.format_exercise_name(raw_exercise_name)
+    
+    # Get icon for the exercise
+    icon_name = get_icon_name("exercise", raw_exercise_name)
+    
+    # Format date (e.g., "Today", "Yesterday", or "Oct 12, 2023")
+    # For now ensuring we have a readable string, assuming format_date handles it well
     date_formatted = WorkoutHistoryFormatter.format_date(
         session.get('start_time', '')
     )
+    
     duration_formatted = WorkoutHistoryFormatter.format_duration(
         session.get('duration', 0)
     )
@@ -228,37 +235,63 @@ def render_session_card(session):
         status_class = "status-active"
         status_icon = "🏃"
 
+    # Get additional session info
+    start_time = session.get('start_time', '')
+    quality_score = session.get('quality_score', 0)
+    
+    # Format start time for display
+    time_display = ""
+    if start_time:
+        try:
+            from datetime import datetime
+            dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+            time_display = dt.strftime("%I:%M %p")
+        except:
+            time_display = ""
+    
     # Custom HTML Card
     card_html = f"""
-    <div class="history-card animate-slide-up">
-        <div class="history-header">
-            <div class="history-title">
-                {exercise_name}
-                <span class="status-badge {status_class}">
-                    {status_icon} {status.upper()}
-                </span>
-            </div>
-            <div class="history-date">
-                📅 {date_formatted}
-            </div>
-        </div>
-        
-        <div class="history-stats">
-            <div class="stat-item">
-                <div class="stat-label">Reps</div>
-                <div class="stat-value">{reps}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Duration</div>
-                <div class="stat-value">{duration_formatted}</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Calories</div>
-                <div class="stat-value">{calories:.1f}</div>
-            </div>
-        </div>
-    </div>
-    """
+<div class="history-card animate-slide-up">
+<div class="history-content">
+<!-- Icon Section -->
+<div class="history-icon-wrapper">
+<div class="history-icon-bg"></div>
+<span class="material-icons icon-glow-primary">{icon_name}</span>
+</div>
+<!-- Details Section -->
+<div class="history-details">
+<div class="history-header">
+<div>
+<div class="history-title">{exercise_name}</div>
+<div class="history-date">
+<span class="material-icons" style="font-size: 14px;">calendar_today</span>
+{date_formatted}
+{f'<span style="margin-left: 1rem; opacity: 0.7;">🕐 {time_display}</span>' if time_display else ''}
+</div>
+</div>
+<span class="status-badge {status_class}">
+{status_icon} {status.upper()}
+</span>
+</div>
+<div class="history-stats">
+<div class="stat-item">
+<div class="stat-value">{reps}</div>
+<div class="stat-label">Reps</div>
+</div>
+<div class="stat-item">
+<div class="stat-value">{duration_formatted}</div>
+<div class="stat-label">Duration</div>
+</div>
+<div class="stat-item">
+<div class="stat-value">{calories:.0f}</div>
+<div class="stat-label">Calories</div>
+</div>
+{f'<div class="stat-item"><div class="stat-value">{quality_score}%</div><div class="stat-label">Quality</div></div>' if quality_score > 0 else ''}
+</div>
+</div>
+</div>
+</div>
+"""
     st.markdown(card_html, unsafe_allow_html=True)
 
 
